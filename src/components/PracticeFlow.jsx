@@ -259,15 +259,19 @@ export default function PracticeFlow({ token, isDiagnostic, student, initialStat
     const total = results.length
     const correct = results.filter((r) => r.correct).length
     const pct = total > 0 ? Math.round((correct / total) * 100) : 0
+    const cheer = !isDiagnostic && pct >= 80 ? '🎉 ' : ''
     return (
       <div className="page">
         <div className="card">
-          <h1>{isDiagnostic ? 'Check-in complete!' : 'Nice work.'}</h1>
+          <h1>{cheer}{isDiagnostic ? 'All set!' : 'Nice work.'}</h1>
           <p className="sub">
-            {correct} out of {total} correct ({pct}%).
-            {!isDiagnostic && xpGained > 0 ? ` Earned ${xpGained} XP.` : ''}
+            {isDiagnostic
+              ? `You got ${correct} out of ${total}. We've set up practice that fits where you are right now.`
+              : `${correct} out of ${total} correct (${pct}%)${xpGained > 0 ? ` · earned ${xpGained} XP` : ''}.`}
           </p>
-          <button className="btn" style={{ width: '100%' }} onClick={onDone}>Back home</button>
+          <button className="btn big-btn" style={{ width: '100%' }} onClick={onDone}>
+            {isDiagnostic ? 'Start practicing →' : 'Back home'}
+          </button>
         </div>
       </div>
     )
@@ -313,7 +317,7 @@ export default function PracticeFlow({ token, isDiagnostic, student, initialStat
 }
 
 function FeedbackCard({ feedback, onContinue }) {
-  const heading = feedback.correct ? (feedback.streakMsg || 'Correct!') : 'Not quite.'
+  const heading = feedback.correct ? (feedback.streakMsg || 'Correct! ✓') : 'Not quite.'
   return (
     <div className={`card feedback-card ${feedback.correct ? 'correct' : 'wrong'}`}>
       <h1>{heading}</h1>

@@ -81,7 +81,7 @@ export default function StudentEntry() {
       <div className="page">
         <div className="card">
           <h1>{klass?.name || 'Morriello Math'}</h1>
-          <p className="sub">Tap your name to get started.</p>
+          <p className="sub">Tap your name to begin.</p>
           {roster.length === 0 ? (
             <p className="alert alert-info">No students added yet. Your teacher needs to add the roster first.</p>
           ) : (

@@ -70,32 +70,35 @@ export default function StudentHome() {
     <div className="page">
       <div className="card">
         <div className="row-between" style={{ marginBottom: 18 }}>
-          <span className="muted small">Hi, {state.student.display_name}</span>
-          <button className="btn-secondary btn small" onClick={signOut}>Sign out</button>
+          <span className="muted small">Hi, {state.student.display_name} 👋</span>
         </div>
 
         {!diagDone ? (
           <>
             <h1>Let's see where you are.</h1>
-            <p className="sub">Quick 15-question check-in — don't worry about getting every one right. This helps us pick the right practice for you.</p>
-            <button className="btn" style={{ width: '100%' }} onClick={() => setMode('diagnostic')}>
-              Start check-in
+            <p className="sub">12 quick questions — don't worry about getting them all right. This helps us pick the right practice for you.</p>
+            <button className="btn big-btn" style={{ width: '100%' }} onClick={() => setMode('diagnostic')}>
+              Let's go →
             </button>
           </>
         ) : (
           <>
             <h1>Ready to practice?</h1>
-            <p className="sub">Keep going — every problem helps.</p>
+            <p className="sub">Every problem makes you stronger. Aim for a streak — 5 in a row unlocks a surprise.</p>
             <div className="stats-row">
               <Stat label="Level" value={level} />
               <Stat label="XP" value={totalXp} />
               <Stat label="Best streak" value={best} />
             </div>
-            <button className="btn" style={{ width: '100%', marginTop: 16 }} onClick={() => setMode('practice')}>
-              Start practice
+            <button className="btn big-btn" style={{ width: '100%', marginTop: 16 }} onClick={() => setMode('practice')}>
+              Start practice →
             </button>
           </>
         )}
+
+        <button className="btn-secondary btn done-btn" onClick={signOut}>
+          I'm done — sign out
+        </button>
       </div>
     </div>
   )

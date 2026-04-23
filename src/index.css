@@ -102,6 +102,20 @@ button {
 }
 .btn-danger:hover { background: #fdf2f2; }
 
+.big-btn {
+  font-size: 17px;
+  padding: 16px 22px;
+}
+
+.done-btn {
+  margin-top: 18px;
+  width: 100%;
+  font-size: 13px;
+  padding: 10px 14px;
+  color: var(--muted);
+}
+.done-btn:hover { color: var(--ink); }
+
 .input, textarea.input {
   width: 100%;
   border: 1px solid var(--line);
