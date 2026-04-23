@@ -18,7 +18,7 @@ export default function StudentEntry() {
   useEffect(() => {
     const existing = loadSession()
     if (existing?.token) {
-      api.studentVerifySession(existing.token)
+      api.studentState(existing.token)
         .then(() => nav('/home', { replace: true }))
         .catch(() => { /* stale — fall through to picker */ })
     }

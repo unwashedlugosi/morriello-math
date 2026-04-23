@@ -49,7 +49,6 @@ export const api = {
   listRoster: (classSlug) => get(`/api/roster?class=${encodeURIComponent(classSlug)}`),
   studentLogin: ({ studentId, pin }) => post('/api/student-login', { studentId, pin }),
   studentCreatePin: ({ studentId, pin }) => post('/api/student-create-pin', { studentId, pin }),
-  studentVerifySession: (token) => post('/api/student-verify-session', { token }),
   studentLogout: (token) => post('/api/student-logout', { token }),
   requestNameAdd: ({ classSlug, name }) => post('/api/request-name-add', { classSlug, name }),
   teacherInit: (accessToken) => postAuth('/api/teacher-init', accessToken),
