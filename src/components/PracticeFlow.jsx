@@ -13,6 +13,10 @@ import LevelUpCelebration from './LevelUpCelebration.jsx'
 function formatAnswer(problem, raw) {
   if (!problem) return String(raw ?? '')
   if (problem.inputType === 'ordered-pair' || problem.inputType === 'coordinate') {
+    if (Array.isArray(raw)) {
+      const first = raw[0]
+      return first ? `e.g. (${first.x}, ${first.y})` : 'any valid point'
+    }
     if (raw && typeof raw === 'object' && raw.x != null) return `(${raw.x}, ${raw.y})`
     return String(raw)
   }

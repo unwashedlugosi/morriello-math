@@ -25,6 +25,17 @@ function shuffle(arr) {
   return a
 }
 
+function ordinal(n) {
+  const last2 = n % 100
+  if (last2 >= 11 && last2 <= 13) return 'th'
+  switch (n % 10) {
+    case 1: return 'st'
+    case 2: return 'nd'
+    case 3: return 'rd'
+    default: return 'th'
+  }
+}
+
 // ===== TOPICS =====
 
 export const TOPICS = {
@@ -154,6 +165,10 @@ export function checkProblemAnswer(problem, answer) {
     const ux = parseInt(answer?.x)
     const uy = parseInt(answer?.y)
     if (isNaN(ux) || isNaN(uy)) return false
+    // Some problems accept any of multiple valid points (e.g. "any point on this line")
+    if (Array.isArray(expected)) {
+      return expected.some((p) => p.x === ux && p.y === uy)
+    }
     return ux === expected.x && uy === expected.y
   }
 
@@ -174,7 +189,92 @@ const POINT_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'M', 'N'
 
 function gen_plot_points(hard = false) {
   const range = 8
-  const variant = hard ? pick(['name-point', 'plot-point', 'plot-from-directions']) : pick(['name-point', 'plot-point'])
+  const easyVariants = ['name-point', 'plot-point', 'identify-from-options']
+  const hardVariants = ['name-point', 'plot-point', 'plot-from-directions', 'identify-from-options', 'same-line-as', 'real-life-map']
+  const variant = pick(hard ? hardVariants : easyVariants)
+
+  if (variant === 'identify-from-options') {
+    const points = []
+    for (let i = 0; i < 4; i++) {
+      let x, y, ok = false
+      for (let attempt = 0; attempt < 30 && !ok; attempt++) {
+        x = randInt(0, range)
+        y = randInt(0, range)
+        ok = !points.some((p) => p.x === x && p.y === y)
+      }
+      points.push({ x, y, label: POINT_LABELS[i] })
+    }
+    const target = pick(points)
+    const choices = shuffle(points.map((p) => p.label))
+    return {
+      id: makeId(), topic: 'plot-points', type: 'computation', difficulty: hard ? 2 : 1,
+      question: `Which point is at (${target.x}, ${target.y})?`,
+      inputType: 'choice',
+      grid: { range, points },
+      choices,
+      answer: target.label,
+      explanation: [
+        `Move ${target.x} units right and ${target.y} units up from the origin.`,
+        `That's where point ${target.label} is plotted.`,
+      ],
+      hint: `Find (${target.x}, ${target.y}) on the grid, then look at which letter is labeled there.`,
+    }
+  }
+
+  if (variant === 'same-line-as') {
+    const horizontal = Math.random() < 0.5
+    const ax = randInt(1, range - 1)
+    const ay = randInt(1, range - 1)
+    const valid = []
+    for (let i = 0; i <= range; i++) {
+      if (horizontal && i !== ax) valid.push({ x: i, y: ay })
+      else if (!horizontal && i !== ay) valid.push({ x: ax, y: i })
+    }
+    return {
+      id: makeId(), topic: 'plot-points', type: 'word-problem', difficulty: 2,
+      question: `Point A is at (${ax}, ${ay}). Plot a point B that lies on the same ${horizontal ? 'horizontal' : 'vertical'} line as A.`,
+      inputType: 'coordinate',
+      grid: { range, points: [{ x: ax, y: ay, label: 'A' }] },
+      answer: valid,
+      explanation: [
+        horizontal
+          ? `Points on a horizontal line share the same y-coordinate.`
+          : `Points on a vertical line share the same x-coordinate.`,
+        horizontal
+          ? `B needs y = ${ay}. Any x other than ${ax} works.`
+          : `B needs x = ${ax}. Any y other than ${ay} works.`,
+      ],
+      hint: horizontal
+        ? `Pick any point straight to the left or right of A.`
+        : `Pick any point straight up or down from A.`,
+    }
+  }
+
+  if (variant === 'real-life-map') {
+    const places = [
+      { name: 'school', label: 'School' },
+      { name: 'library', label: 'Library' },
+      { name: 'park', label: 'Park' },
+      { name: 'store', label: 'Store' },
+    ]
+    const home = { x: 0, y: 0, label: 'Home' }
+    const place = pick(places)
+    const east = randInt(2, range - 1)
+    const north = randInt(2, range - 1)
+    return {
+      id: makeId(), topic: 'plot-points', type: 'word-problem', difficulty: 2,
+      question: `From your home at the origin, the ${place.name} is ${east} blocks east and ${north} blocks north. Tap the ${place.name}'s location.`,
+      inputType: 'coordinate',
+      grid: { range, points: [home] },
+      answer: { x: east, y: north },
+      explanation: [
+        `East = right (x direction): ${east} blocks.`,
+        `North = up (y direction): ${north} blocks.`,
+        `So the ${place.name} is at (${east}, ${north}).`,
+      ],
+      hint: `East is right, north is up. Move the right amount in each direction from home.`,
+    }
+  }
 
   if (variant === 'name-point') {
     // Show a grid with a labeled point, ask for coordinates
@@ -240,7 +340,118 @@ function gen_plot_points(hard = false) {
 
 function gen_point_distance(hard = false) {
   const range = 9
-  // Generate two points on same horizontal OR vertical line
+  const easyVariants = ['direct', 'name-other-point']
+  const hardVariants = ['direct', 'rectangle-perimeter', 'which-is-longer', 'rectangle-area', 'name-other-point']
+  const variant = pick(hard ? hardVariants : easyVariants)
+
+  if (variant === 'which-is-longer') {
+    // Two labeled segments AB and CD; ask which is longer
+    const horiz1 = Math.random() < 0.5
+    const horiz2 = Math.random() < 0.5
+    function makeSeg(horiz, ymin, ymax) {
+      let p1, p2
+      if (horiz) {
+        const y = randInt(ymin, ymax)
+        const xa = randInt(0, range - 3)
+        const xb = randInt(xa + 2, range)
+        p1 = { x: xa, y }; p2 = { x: xb, y }
+      } else {
+        const x = randInt(0, range)
+        const ya = randInt(ymin, ymax - 2)
+        const yb = randInt(ya + 2, ymax)
+        p1 = { x, y: ya }; p2 = { x, y: yb }
+      }
+      return { p1, p2, len: Math.abs(p2.x - p1.x) + Math.abs(p2.y - p1.y) }
+    }
+    let s1, s2
+    do { s1 = makeSeg(horiz1, 5, range); s2 = makeSeg(horiz2, 0, 4) } while (s1.len === s2.len)
+    const ab = s1.len > s2.len ? 'AB' : 'CD'
+    return {
+      id: makeId(), topic: 'point-distance', type: 'computation', difficulty: 2,
+      question: `Which segment is longer, AB or CD?`,
+      inputType: 'choice',
+      grid: {
+        range,
+        points: [
+          { ...s1.p1, label: 'A' }, { ...s1.p2, label: 'B' },
+          { ...s2.p1, label: 'C' }, { ...s2.p2, label: 'D' },
+        ],
+        connect: [['A', 'B'], ['C', 'D']],
+      },
+      choices: ['AB', 'CD', 'They are the same length'],
+      answer: ab,
+      explanation: [
+        `AB length: ${s1.len} units.`,
+        `CD length: ${s2.len} units.`,
+        `So ${ab} is longer.`,
+      ],
+      hint: `Count the grid units along each segment.`,
+    }
+  }
+
+  if (variant === 'name-other-point') {
+    // Line through two points; name another point on that line
+    const horizontal = Math.random() < 0.5
+    let p1, p2, valid
+    if (horizontal) {
+      const y = randInt(1, range - 1)
+      const xa = randInt(0, range - 4)
+      const xb = randInt(xa + 3, range)
+      p1 = { x: xa, y }; p2 = { x: xb, y }
+      valid = []
+      for (let i = 0; i <= range; i++) if (i !== xa && i !== xb) valid.push({ x: i, y })
+    } else {
+      const x = randInt(1, range - 1)
+      const ya = randInt(0, range - 4)
+      const yb = randInt(ya + 3, range)
+      p1 = { x, y: ya }; p2 = { x, y: yb }
+      valid = []
+      for (let i = 0; i <= range; i++) if (i !== ya && i !== yb) valid.push({ x, y: i })
+    }
+    return {
+      id: makeId(), topic: 'point-distance', type: 'word-problem', difficulty: hard ? 2 : 1,
+      question: `A line passes through (${p1.x}, ${p1.y}) and (${p2.x}, ${p2.y}). Tap to plot another point that lies on this line.`,
+      inputType: 'coordinate',
+      grid: { range, points: [{ ...p1, label: 'A' }, { ...p2, label: 'B' }], connect: [['A', 'B']] },
+      answer: valid,
+      explanation: [
+        horizontal
+          ? `The line is horizontal — every point on it has y = ${p1.y}.`
+          : `The line is vertical — every point on it has x = ${p1.x}.`,
+        `Pick any other point with that ${horizontal ? 'y' : 'x'}-coordinate.`,
+      ],
+      hint: `What do A and B have in common? Find another point with the same.`,
+    }
+  }
+
+  if (variant === 'rectangle-area' && hard) {
+    const w = randInt(3, 6)
+    const h = randInt(2, 5)
+    const bx = randInt(0, range - w)
+    const by = randInt(0, range - h)
+    const area = w * h
+    return {
+      id: makeId(), topic: 'point-distance', type: 'word-problem', difficulty: 2,
+      question: `A rectangle has corners at (${bx}, ${by}), (${bx + w}, ${by}), (${bx + w}, ${by + h}), and (${bx}, ${by + h}). What is the area?`,
+      inputType: 'number',
+      grid: {
+        range,
+        points: [
+          { x: bx, y: by, label: 'A' }, { x: bx + w, y: by, label: 'B' },
+          { x: bx + w, y: by + h, label: 'C' }, { x: bx, y: by + h, label: 'D' },
+        ],
+        connect: [['A', 'B'], ['B', 'C'], ['C', 'D'], ['D', 'A']],
+      },
+      answer: area,
+      explanation: [
+        `Width: ${w} units. Height: ${h} units.`,
+        `Area = width × height = ${w} × ${h} = ${area}.`,
+      ],
+      hint: `Area of a rectangle = length × width.`,
+    }
+  }
+
+  // Default: 'direct' (two points on same line) or 'rectangle-perimeter' (hard fallback)
   const horizontal = Math.random() < 0.5
 
   let x1, y1, x2, y2
@@ -258,7 +469,7 @@ function gen_point_distance(hard = false) {
   let labelB = pick(POINT_LABELS)
   while (labelB === labelA) labelB = pick(POINT_LABELS)
 
-  if (hard && Math.random() < 0.5) {
+  if (variant === 'rectangle-perimeter') {
     // Perimeter of rectangle problem
     const w = Math.max(2, randInt(3, 6))
     const h = Math.max(2, randInt(2, 5))
@@ -323,7 +534,65 @@ const POLYGON_CHOICES = ['triangle', 'rectangle', 'square', 'trapezoid', 'parall
 
 function gen_identify_polygons(hard = false) {
   const range = 8
-  // Build a polygon of chosen type from vertices
+  const easyVariants = ['identify', 'count-vertices-name']
+  const hardVariants = ['identify', 'count-vertices-name', 'complete-rectangle']
+  const variant = pick(hard ? hardVariants : easyVariants)
+
+  if (variant === 'count-vertices-name') {
+    const shapes = [
+      { count: 3, name: 'triangle' },
+      { count: 4, name: 'quadrilateral' },
+      { count: 5, name: 'pentagon' },
+      { count: 6, name: 'hexagon' },
+    ]
+    const target = pick(shapes)
+    const distractors = shuffle(shapes.filter((s) => s.name !== target.name)).slice(0, 2)
+    return {
+      id: makeId(), topic: 'identify-polygons', type: 'computation', difficulty: hard ? 2 : 1,
+      question: `What is the name of a polygon with ${target.count} vertices (sides)?`,
+      inputType: 'choice',
+      choices: shuffle([target.name, ...distractors.map((d) => d.name)]),
+      answer: target.name,
+      explanation: [
+        `Count the vertices: ${target.count}.`,
+        `${target.count}-sided polygon = ${target.name}.`,
+      ],
+      hint: `Think about the prefix: tri- (3), quad- (4), penta- (5), hexa- (6).`,
+    }
+  }
+
+  if (variant === 'complete-rectangle') {
+    const x = randInt(1, range - 5)
+    const y = randInt(1, range - 4)
+    const w = randInt(3, 5)
+    let h = randInt(2, 4)
+    if (h === w) h = w === 3 ? 2 : 3
+    // Three corners shown; ask for fourth
+    const allCorners = [
+      { x, y, label: 'A' },
+      { x: x + w, y, label: 'B' },
+      { x: x + w, y: y + h, label: 'C' },
+      { x, y: y + h, label: 'D' },
+    ]
+    // Hide corner D — student must plot it
+    const shown = allCorners.slice(0, 3)
+    const missing = allCorners[3]
+    return {
+      id: makeId(), topic: 'identify-polygons', type: 'word-problem', difficulty: 2,
+      question: `Three corners of a rectangle are at A(${x}, ${y}), B(${x + w}, ${y}), and C(${x + w}, ${y + h}). Tap the grid to plot the fourth corner.`,
+      inputType: 'coordinate',
+      grid: { range, points: shown, connect: [['A', 'B'], ['B', 'C']] },
+      answer: { x: missing.x, y: missing.y },
+      explanation: [
+        `A rectangle has 4 right angles and opposite sides equal.`,
+        `D must be directly above A and directly left of C.`,
+        `So D = (${missing.x}, ${missing.y}).`,
+      ],
+      hint: `D should be straight up from A and straight left from C.`,
+    }
+  }
+
+  // 'identify' variant — original behavior
   const shape = pick(
     hard ? ['triangle', 'rectangle', 'square', 'trapezoid', 'pentagon', 'hexagon'] : ['triangle', 'rectangle', 'square']
   )
@@ -432,9 +701,86 @@ function gen_graph_data(hard = false) {
   }
 
   const variants = hard
-    ? ['diff-max-min', 'how-many-above', 'specific-x']
-    : ['specific-x', 'how-many-above']
+    ? ['diff-max-min', 'how-many-above', 'specific-x', 'max-x', 'total-sum', 'ratio-compare']
+    : ['specific-x', 'how-many-above', 'max-x', 'total-sum']
   const variant = pick(variants)
+
+  if (variant === 'max-x') {
+    let maxIdx = 0
+    for (let i = 1; i < data.length; i++) if (data[i].y > data[maxIdx].y) maxIdx = i
+    return {
+      id: makeId(), topic: 'graph-data', type: 'word-problem', difficulty: hard ? 2 : 1,
+      question: `Which ${sc.xLabel.toLowerCase()} had the most ${sc.yLabel.toLowerCase()}?`,
+      inputType: 'choice',
+      table: { xLabel: sc.xLabel, yLabel: sc.yLabel, rows: data.map((d) => ({ x: d.x, y: d.y })) },
+      choices: data.map((d) => `${sc.xLabel} ${d.x}`),
+      answer: `${sc.xLabel} ${data[maxIdx].x}`,
+      explanation: [
+        `Find the largest ${sc.yLabel.toLowerCase()} in the table: ${data[maxIdx].y}.`,
+        `That's at ${sc.xLabel.toLowerCase()} ${data[maxIdx].x}.`,
+      ],
+      hint: `Find the biggest number in the table, then look at which ${sc.xLabel.toLowerCase()} it goes with.`,
+    }
+  }
+
+  if (variant === 'total-sum') {
+    const total = data.reduce((s, d) => s + d.y, 0)
+    return {
+      id: makeId(), topic: 'graph-data', type: 'word-problem', difficulty: hard ? 2 : 1,
+      question: `What is the total ${sc.yLabel.toLowerCase()} across all ${sc.xLabel.toLowerCase()}s?`,
+      inputType: 'number',
+      table: { xLabel: sc.xLabel, yLabel: sc.yLabel, rows: data.map((d) => ({ x: d.x, y: d.y })) },
+      answer: total,
+      explanation: [
+        `Add up all the values: ${data.map((d) => d.y).join(' + ')} = ${total}.`,
+      ],
+      hint: `Add every number in the bottom row of the table.`,
+    }
+  }
+
+  if (variant === 'ratio-compare') {
+    // Pick two values where one is a clean multiple of the other
+    let i1 = 0, i2 = 1, ratio = 0
+    for (let attempt = 0; attempt < 30; attempt++) {
+      const a = randInt(0, data.length - 1)
+      const b = randInt(0, data.length - 1)
+      if (a === b) continue
+      const big = Math.max(data[a].y, data[b].y)
+      const small = Math.min(data[a].y, data[b].y)
+      if (small > 0 && big % small === 0 && big / small >= 2 && big / small <= 5) {
+        i1 = data[a].y > data[b].y ? a : b
+        i2 = data[a].y > data[b].y ? b : a
+        ratio = big / small
+        break
+      }
+    }
+    if (ratio < 2) {
+      // Fallback to specific-x style if no clean ratio
+      const q = pick(data)
+      return {
+        id: makeId(), topic: 'graph-data', type: 'word-problem', difficulty: hard ? 2 : 1,
+        question: `Use the table. How many ${sc.yLabel.toLowerCase()} were there in ${sc.xLabel.toLowerCase()} ${q.x}?`,
+        inputType: 'number',
+        table: { xLabel: sc.xLabel, yLabel: sc.yLabel, rows: data.map((d) => ({ x: d.x, y: d.y })) },
+        answer: q.y,
+        explanation: [`Read the value: ${q.y}.`],
+        hint: `Look it up in the table.`,
+      }
+    }
+    return {
+      id: makeId(), topic: 'graph-data', type: 'word-problem', difficulty: 2,
+      question: `How many times as many ${sc.yLabel.toLowerCase()} were there in ${sc.xLabel.toLowerCase()} ${data[i1].x} as in ${sc.xLabel.toLowerCase()} ${data[i2].x}?`,
+      inputType: 'number',
+      table: { xLabel: sc.xLabel, yLabel: sc.yLabel, rows: data.map((d) => ({ x: d.x, y: d.y })) },
+      answer: ratio,
+      explanation: [
+        `${sc.xLabel} ${data[i1].x}: ${data[i1].y}.`,
+        `${sc.xLabel} ${data[i2].x}: ${data[i2].y}.`,
+        `${data[i1].y} ÷ ${data[i2].y} = ${ratio}.`,
+      ],
+      hint: `Divide the bigger number by the smaller one.`,
+    }
+  }
 
   if (variant === 'specific-x') {
     const q = pick(data)
@@ -508,9 +854,75 @@ function gen_line_graphs(hard = false) {
   }
 
   const variants = hard
-    ? ['biggest-jump', 'estimate-between', 'value-at-x']
-    : ['value-at-x', 'biggest-jump']
+    ? ['biggest-jump', 'estimate-between', 'value-at-x', 'range', 'biggest-drop']
+    : ['value-at-x', 'biggest-jump', 'range']
   const variant = pick(variants)
+
+  if (variant === 'range') {
+    const yvals = points.map((p) => p.y)
+    const maxY = Math.max(...yvals)
+    const minY = Math.min(...yvals)
+    return {
+      id: makeId(), topic: 'line-graphs', type: 'word-problem', difficulty: hard ? 2 : 1,
+      question: `What is the difference between the greatest and least ${sc.yLabel.toLowerCase()} on the graph?`,
+      inputType: 'number',
+      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax },
+      answer: maxY - minY,
+      explanation: [
+        `Greatest ${sc.yLabel.toLowerCase()}: ${maxY}.`,
+        `Least: ${minY}.`,
+        `Difference: ${maxY} − ${minY} = ${maxY - minY}.`,
+      ],
+      hint: `Find the highest point and the lowest point on the graph, then subtract.`,
+    }
+  }
+
+  if (variant === 'biggest-drop') {
+    // Find the segment with the biggest decrease
+    let maxDrop = 0, dropIdx = -1
+    for (let i = 1; i < points.length; i++) {
+      const d = points[i - 1].y - points[i].y
+      if (d > maxDrop) { maxDrop = d; dropIdx = i }
+    }
+    if (dropIdx === -1) {
+      // No drop in this graph — fall back to biggest-jump
+      let maxJump = 0, jumpIdx = 0
+      for (let i = 1; i < points.length; i++) {
+        const d = Math.abs(points[i].y - points[i - 1].y)
+        if (d > maxJump) { maxJump = d; jumpIdx = i }
+      }
+      const correctAnswer = `${sc.xLabel.split(' ')[0]} ${points[jumpIdx - 1].x} and ${points[jumpIdx].x}`
+      return {
+        id: makeId(), topic: 'line-graphs', type: 'word-problem', difficulty: 2,
+        question: `Between which two points does the graph change the most?`,
+        inputType: 'choice',
+        choices: shuffle([correctAnswer, `${sc.xLabel.split(' ')[0]} 1 and 2`, `${sc.xLabel.split(' ')[0]} 5 and 6`]),
+        lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax },
+        answer: correctAnswer,
+        explanation: [`Look for the steepest segment.`],
+        hint: `Steepest line = biggest change.`,
+      }
+    }
+    const correctAnswer = `${sc.xLabel.split(' ')[0]} ${points[dropIdx - 1].x} and ${points[dropIdx].x}`
+    const otherPairs = []
+    for (let i = 1; i < points.length; i++) {
+      if (i !== dropIdx) otherPairs.push(`${sc.xLabel.split(' ')[0]} ${points[i - 1].x} and ${points[i].x}`)
+    }
+    const choices = shuffle([correctAnswer, ...shuffle(otherPairs).slice(0, 2)])
+    return {
+      id: makeId(), topic: 'line-graphs', type: 'word-problem', difficulty: 2,
+      question: `Between which two points does the value DECREASE the most?`,
+      inputType: 'choice',
+      choices,
+      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax },
+      answer: correctAnswer,
+      explanation: [
+        `Look for the segment that goes down the most.`,
+        `${correctAnswer}: from ${points[dropIdx - 1].y} to ${points[dropIdx].y}, a decrease of ${maxDrop}.`,
+      ],
+      hint: `Find the part of the graph that goes DOWN the steepest.`,
+    }
+  }
 
   if (variant === 'value-at-x') {
     const q = pick(points)
@@ -582,7 +994,76 @@ function gen_line_graphs(hard = false) {
 // ===== 12.6: NUMERICAL PATTERNS =====
 
 function gen_number_patterns(hard = false) {
-  const variant = hard ? pick(['find-rule', 'extend-related', 'two-patterns']) : pick(['extend-single', 'find-rule'])
+  const variant = hard
+    ? pick(['find-rule', 'extend-related', 'two-patterns', 'fill-missing', 'apply-rule', 'which-rule'])
+    : pick(['extend-single', 'find-rule', 'fill-missing', 'apply-rule'])
+
+  if (variant === 'fill-missing') {
+    const start = randInt(0, 5)
+    const step = randInt(2, 8)
+    const len = 6
+    const seq = []
+    for (let i = 0; i < len; i++) seq.push(start + step * i)
+    const missingIdx = randInt(2, len - 2) // not first, not last
+    const display = seq.map((v, i) => (i === missingIdx ? '___' : String(v))).join(', ')
+    return {
+      id: makeId(), topic: 'number-patterns', type: 'computation', difficulty: hard ? 2 : 1,
+      question: `Fill in the missing number in this pattern: ${display}`,
+      inputType: 'number',
+      answer: seq[missingIdx],
+      explanation: [
+        `The pattern adds ${step} each step.`,
+        `${seq[missingIdx - 1]} + ${step} = ${seq[missingIdx]}.`,
+        `(You can also check by going backward: ${seq[missingIdx + 1]} − ${step} = ${seq[missingIdx]}.)`,
+      ],
+      hint: `Find the difference between two consecutive known numbers — that's the rule. Then apply it.`,
+    }
+  }
+
+  if (variant === 'apply-rule') {
+    const start = randInt(0, 4)
+    const step = randInt(2, 12)
+    const term = randInt(4, 8)
+    return {
+      id: makeId(), topic: 'number-patterns', type: 'computation', difficulty: hard ? 2 : 1,
+      question: `A pattern starts at ${start} and follows the rule "Add ${step}". What is the ${term}${ordinal(term)} number in the pattern?`,
+      inputType: 'number',
+      answer: start + step * (term - 1),
+      explanation: [
+        `Term 1 is ${start}.`,
+        `Each step adds ${step}, and you take ${term - 1} steps to get to term ${term}.`,
+        `${start} + ${step} × ${term - 1} = ${start + step * (term - 1)}.`,
+      ],
+      hint: `Term 1 = start. Term n = start + step × (n − 1).`,
+    }
+  }
+
+  if (variant === 'which-rule') {
+    // Two related patterns; ask the rule that connects them
+    const ratio = pick([2, 3, 4, 5])
+    const xs = [1, 2, 3, 4, 5]
+    const ys = xs.map((x) => x * ratio)
+    const tableRows = xs.map((x, i) => ({ x, y: ys[i] }))
+    return {
+      id: makeId(), topic: 'number-patterns', type: 'word-problem', difficulty: 2,
+      question: `Look at the table below. What rule connects x and y?`,
+      inputType: 'choice',
+      table: { xLabel: 'x', yLabel: 'y', rows: tableRows },
+      choices: shuffle([
+        `Multiply x by ${ratio}`,
+        `Add ${ratio} to x`,
+        `Multiply x by ${ratio + 1}`,
+        `Subtract x from ${ratio}`,
+      ]),
+      answer: `Multiply x by ${ratio}`,
+      explanation: [
+        `Look at each pair: ${xs.map((x, i) => `${x} → ${ys[i]}`).join(', ')}.`,
+        `Each y is ${ratio} times its x.`,
+        `Rule: Multiply x by ${ratio}.`,
+      ],
+      hint: `Pick a row. Divide y by x to find the relationship.`,
+    }
+  }
 
   if (variant === 'extend-single') {
     const start = randInt(0, 5)
