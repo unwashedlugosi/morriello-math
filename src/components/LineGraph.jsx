@@ -38,7 +38,7 @@ export default function LineGraph({ title, xLabel, yLabel, points, yMax }) {
   return (
     <div className="line-graph-wrap">
       <div className="line-graph-title">{title}</div>
-      <svg className="line-graph" width={W} height={H}>
+      <svg className="line-graph" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
         {/* Horizontal grid lines + labels */}
         {hLines.map((ln, i) => (
           <g key={`h${i}`}>

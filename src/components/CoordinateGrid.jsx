@@ -1,13 +1,15 @@
 import { useState } from 'react'
 
-const CELL = 32 // pixels per grid unit
+// Logical (viewBox) coordinates — actual pixel size scales with container width.
+const CELL = 32
 const PAD_LEFT = 32
 const PAD_BOTTOM = 28
 const PAD_TOP = 12
 const PAD_RIGHT = 12
 
 // Renders a coordinate plane with optional labeled points, line segments
-// connecting points, and an optional click-to-plot mode.
+// connecting points, and an optional click-to-plot mode. Responsive to
+// container width via SVG viewBox.
 export default function CoordinateGrid({ range = 8, points = [], connect = [], interactive = false, plottedPoint, onPlot }) {
   const [hover, setHover] = useState(null)
   const width = PAD_LEFT + range * CELL + PAD_RIGHT
@@ -16,24 +18,38 @@ export default function CoordinateGrid({ range = 8, points = [], connect = [], i
   function toSvgX(x) { return PAD_LEFT + x * CELL }
   function toSvgY(y) { return PAD_TOP + (range - y) * CELL }
 
+  // Convert client coords → viewBox grid coords (handles SVG scaling)
+  function toGrid(clientX, clientY, target) {
+    const rect = target.getBoundingClientRect()
+    const scaleX = width / rect.width
+    const scaleY = height / rect.height
+    const sx = (clientX - rect.left) * scaleX
+    const sy = (clientY - rect.top) * scaleY
+    const gx = Math.round((sx - PAD_LEFT) / CELL)
+    const gy = Math.round(range - (sy - PAD_TOP) / CELL)
+    return { gx, gy }
+  }
+
   function handleClick(e) {
     if (!interactive) return
-    const rect = e.currentTarget.getBoundingClientRect()
-    const sx = e.clientX - rect.left
-    const sy = e.clientY - rect.top
-    const gx = Math.round((sx - PAD_LEFT) / CELL)
-    const gy = Math.round((range - (sy - PAD_TOP) / CELL))
+    const { gx, gy } = toGrid(e.clientX, e.clientY, e.currentTarget)
     if (gx < 0 || gx > range || gy < 0 || gy > range) return
+    onPlot?.({ x: gx, y: gy })
+  }
+
+  function handleTouchEnd(e) {
+    if (!interactive) return
+    const t = e.changedTouches?.[0]
+    if (!t) return
+    const { gx, gy } = toGrid(t.clientX, t.clientY, e.currentTarget)
+    if (gx < 0 || gx > range || gy < 0 || gy > range) return
+    e.preventDefault()
     onPlot?.({ x: gx, y: gy })
   }
 
   function handleMouseMove(e) {
     if (!interactive) return
-    const rect = e.currentTarget.getBoundingClientRect()
-    const sx = e.clientX - rect.left
-    const sy = e.clientY - rect.top
-    const gx = Math.round((sx - PAD_LEFT) / CELL)
-    const gy = Math.round((range - (sy - PAD_TOP) / CELL))
+    const { gx, gy } = toGrid(e.clientX, e.clientY, e.currentTarget)
     if (gx < 0 || gx > range || gy < 0 || gy > range) { setHover(null); return }
     setHover({ x: gx, y: gy })
   }
@@ -46,12 +62,13 @@ export default function CoordinateGrid({ range = 8, points = [], connect = [], i
     <div className="coord-grid-wrap">
       <svg
         className="coord-grid"
-        width={width}
-        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="xMidYMid meet"
         onClick={handleClick}
+        onTouchEnd={handleTouchEnd}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setHover(null)}
-        style={{ cursor: interactive ? 'crosshair' : 'default' }}
+        style={{ cursor: interactive ? 'crosshair' : 'default', touchAction: interactive ? 'manipulation' : 'auto' }}
       >
         {/* Grid lines */}
         {Array.from({ length: range + 1 }).map((_, i) => (
