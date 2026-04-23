@@ -384,6 +384,96 @@ button {
   margin: 8px 0 4px;
 }
 
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  z-index: 20;
+}
+.modal-card {
+  width: 100%;
+  max-width: 720px;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+.progress-table th, .progress-table td {
+  font-size: 13px;
+  padding: 8px 6px;
+}
+.progress-table tbody tr:hover { background: #f5f7ff; }
+
+.mastery-chip {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+}
+.mastery-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.mastery-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.mastery-legend .mastery-chip { width: 12px; height: 12px; }
+
+.mastery-bars { display: flex; flex-direction: column; gap: 6px; }
+.mastery-bar-row {
+  display: grid;
+  grid-template-columns: 170px 1fr 180px;
+  gap: 12px;
+  align-items: center;
+  font-size: 13px;
+}
+@media (max-width: 640px) {
+  .mastery-bar-row { grid-template-columns: 1fr; }
+  .mastery-bar-meta { text-align: left; }
+}
+.mastery-bar-label { color: var(--ink); font-weight: 500; }
+.mastery-bar-track {
+  height: 10px;
+  background: #eef1f6;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.mastery-bar-fill { height: 100%; transition: width 0.3s; }
+.mastery-bar-meta { text-align: right; }
+
+.topic-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.replay-list { display: flex; flex-direction: column; gap: 8px; }
+.replay-item {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fafbff;
+  font-size: 13px;
+}
+.replay-item.correct { border-left: 3px solid var(--good); }
+.replay-item.wrong { border-left: 3px solid var(--bad); background: #fff7f7; }
+.replay-header { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+.replay-header .mark { font-weight: 700; font-size: 15px; }
+.replay-item.correct .mark { color: var(--good); }
+.replay-item.wrong .mark { color: var(--bad); }
+.replay-topic { font-weight: 600; color: var(--ink); }
+.replay-q { color: var(--ink); margin-bottom: 2px; }
+.replay-ans { color: var(--muted); font-size: 12px; }
+
 .feedback-card.correct { border-top: 4px solid var(--good); }
 .feedback-card.wrong { border-top: 4px solid var(--warn); }
 .explanation-box {
