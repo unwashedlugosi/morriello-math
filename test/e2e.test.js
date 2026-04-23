@@ -10,24 +10,32 @@ import { chromium } from 'playwright'
 const BASE = process.env.E2E_BASE || 'https://morriello-math.vercel.app'
 const SUPABASE_URL = 'https://dhwllgdxpeucldtmzhme.supabase.co'
 const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRod2xsZ2R4cGV1Y2xkdG16aG1lIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDIzMjY1MywiZXhwIjoyMDg1ODA4NjUzfQ.CWaeSdJgqYFVNq4EQLYTo9w9WCXrW9qDhRQ4J8GUV5g'
-const MGMT_TOKEN = 'sbp_0767953e47d6ebc715fed643f0bd869a74ff5aef'
 
 const TEST_SLUG = `e2e-test-${Date.now()}`
+
+async function pgRest(table, body, method = 'POST', returning = 'representation') {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    method,
+    headers: {
+      apikey: SERVICE_KEY,
+      Authorization: `Bearer ${SERVICE_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: `return=${returning}`,
+    },
+    body: body == null ? undefined : JSON.stringify(body),
+  })
+  if (!r.ok) {
+    const t = await r.text()
+    throw new Error(`${method} /rest/v1/${table} -> ${r.status}: ${t}`)
+  }
+  return r.status === 204 ? null : await r.json()
+}
 
 let pass = 0, fail = 0
 const failures = []
 function check(label, cond, detail) {
   if (cond) { pass += 1; console.log(`  ✓ ${label}`) }
   else { fail += 1; failures.push(`${label}: ${detail || ''}`); console.log(`  ✗ ${label} — ${detail || ''}`) }
-}
-
-async function dbQuery(sql) {
-  const r = await fetch(`https://api.supabase.com/v1/projects/dhwllgdxpeucldtmzhme/database/query`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${MGMT_TOKEN}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: sql }),
-  })
-  return await r.json()
 }
 
 async function seedClass() {
@@ -37,26 +45,16 @@ async function seedClass() {
     headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password: 'TestPwd123!', email_confirm: true }),
   })
+  if (!userResp.ok) throw new Error(`Auth user create failed: ${await userResp.text()}`)
   const user = await userResp.json()
   const authId = user.id
 
-  const sql = `
-    WITH t AS (
-      INSERT INTO classroom_teachers (auth_user_id, email, display_name)
-      VALUES ('${authId}', '${email}', 'E2E Test')
-      RETURNING id
-    ), c AS (
-      INSERT INTO classroom_classes (teacher_id, slug, name)
-      SELECT id, '${TEST_SLUG}', 'E2E Test Class' FROM t
-      RETURNING id
-    ), s AS (
-      INSERT INTO classroom_students (class_id, display_name)
-      SELECT c.id, name FROM c, (VALUES ('Alice E2E'),('Bob E2E')) AS v(name)
-      RETURNING id, display_name
-    )
-    SELECT (SELECT id FROM c) AS class_id;
-  `
-  await dbQuery(sql)
+  const [teacher] = await pgRest('classroom_teachers', { auth_user_id: authId, email, display_name: 'E2E Test' })
+  const [klass] = await pgRest('classroom_classes', { teacher_id: teacher.id, slug: TEST_SLUG, name: 'E2E Test Class' })
+  await pgRest('classroom_students', [
+    { class_id: klass.id, display_name: 'Alice E2E' },
+    { class_id: klass.id, display_name: 'Bob E2E' },
+  ])
   return { authId, slug: TEST_SLUG }
 }
 

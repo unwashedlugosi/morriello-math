@@ -25,6 +25,11 @@ export default function StudentEntry() {
   const [askNameAdd, setAskNameAdd] = useState(false)
 
   useEffect(() => {
+    // Preserve ?test=1 across navigations by stashing it in sessionStorage
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search)
+      if (sp.has('test')) sessionStorage.setItem('mm-test', '1')
+    }
     const existing = loadSession()
     if (existing?.token) {
       api.studentState(existing.token)

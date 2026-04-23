@@ -91,11 +91,13 @@ export default function PracticeFlow({ token, isDiagnostic, student, initialStat
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, isDiagnostic])
 
-  // Test hook: when ?test=1 is in the URL, expose the current problem on
-  // window so e2e drivers (Playwright) can pick the correct answer.
+  // Test hook: when test mode is active (set by ?test=1 on the entry URL,
+  // stashed in sessionStorage so it survives navigation), expose the
+  // current problem on window so e2e drivers (Playwright) can pick the
+  // correct answer.
   useEffect(() => {
     if (typeof window === 'undefined') return
-    if (!new URLSearchParams(window.location.search).has('test')) return
+    if (sessionStorage.getItem('mm-test') !== '1') return
     window.__mm_currentProblem = problem
     window.__mm_currentFeedback = feedback
   }, [problem, feedback])
