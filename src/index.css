@@ -208,3 +208,107 @@ button {
 .muted { color: var(--muted); }
 .small { font-size: 13px; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+.stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 16px;
+}
+.stat-cell {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  text-align: center;
+  background: #fafbff;
+}
+.stat-value { font-size: 22px; font-weight: 700; color: var(--ink); }
+.stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+
+.practice-header {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.progress-pill {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.progress-pill.topic-pill {
+  background: #eff3ff;
+  color: var(--accent);
+  border-color: #d0daff;
+}
+
+.problem-card .problem-text {
+  font-size: 20px;
+  line-height: 1.4;
+  font-weight: 500;
+  margin-bottom: 20px;
+  color: var(--ink);
+}
+
+.frac-input-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin: 16px 0;
+}
+.frac-cell {
+  width: 80px;
+  text-align: center;
+  font-size: 22px !important;
+  font-weight: 600;
+}
+.frac-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+.frac-line {
+  height: 2px;
+  background: var(--ink);
+  width: 64px;
+}
+
+.choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 12px 0 8px;
+}
+@media (max-width: 480px) { .choice-grid { grid-template-columns: 1fr; } }
+.choice-btn {
+  padding: 14px 12px;
+  font-size: 15px;
+  font-weight: 500;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  text-align: left;
+}
+.choice-btn:hover { background: #f5f7ff; border-color: var(--accent); }
+.choice-btn.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.feedback-card.correct { border-top: 4px solid var(--good); }
+.feedback-card.wrong { border-top: 4px solid var(--warn); }
+.explanation-box {
+  background: #fafbff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.explanation-box > * + * { margin-top: 6px; }

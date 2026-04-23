@@ -57,4 +57,10 @@ export const api = {
     postAuth('/api/teacher-add-students', accessToken, { classId, names }),
   teacherResetPin: (accessToken, { studentId }) =>
     postAuth('/api/teacher-reset-pin', accessToken, { studentId }),
+  studentState: (token) => post('/api/student-state', { token }),
+  startSession: ({ token, isDiagnostic }) => post('/api/start-session', { token, isDiagnostic }),
+  submitProblemResult: ({ token, practiceSessionId, result }) =>
+    post('/api/submit-problem-result', { token, practiceSessionId, result }),
+  endSession: ({ token, practiceSessionId }) =>
+    post('/api/end-session', { token, practiceSessionId }),
 }

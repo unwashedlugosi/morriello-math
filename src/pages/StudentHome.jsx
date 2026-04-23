@@ -2,44 +2,110 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api.js'
 import { loadSession, clearSession } from '../lib/session.js'
+import PracticeFlow from '../components/PracticeFlow.jsx'
 
 export default function StudentHome() {
   const nav = useNavigate()
-  const [student, setStudent] = useState(null)
-  const [status, setStatus] = useState('loading')
+  const [state, setState] = useState(null)
+  const [token, setToken] = useState(null)
+  const [mode, setMode] = useState('home') // home | diagnostic | practice
 
   useEffect(() => {
     const s = loadSession()
     if (!s?.token) { nav('/', { replace: true }); return }
-    api.studentVerifySession(s.token)
-      .then((res) => { setStudent(res.student); setStatus('ready') })
+    setToken(s.token)
+    api.studentState(s.token)
+      .then((res) => setState(res))
       .catch(() => { clearSession(); nav('/', { replace: true }) })
   }, [nav])
 
   async function signOut() {
-    const s = loadSession()
-    if (s?.token) await api.studentLogout(s.token).catch(() => {})
+    if (token) await api.studentLogout(token).catch(() => {})
     clearSession()
     nav('/', { replace: true })
   }
 
-  if (status === 'loading') {
-    return <div className="page"><div className="card"><p className="muted">Loading…</p></div></div>
+  if (!state) {
+    return <div className="page"><p className="muted">Loading…</p></div>
   }
+
+  if (mode === 'diagnostic') {
+    return (
+      <PracticeFlow
+        token={token}
+        isDiagnostic={true}
+        student={state.student}
+        initialState={state}
+        onDone={async () => {
+          const res = await api.studentState(token)
+          setState(res)
+          setMode('home')
+        }}
+      />
+    )
+  }
+
+  if (mode === 'practice') {
+    return (
+      <PracticeFlow
+        token={token}
+        isDiagnostic={false}
+        student={state.student}
+        initialState={state}
+        onDone={async () => {
+          const res = await api.studentState(token)
+          setState(res)
+          setMode('home')
+        }}
+      />
+    )
+  }
+
+  const diagDone = state.stats?.diagnostic_completed
+  const totalXp = state.stats?.total_xp || 0
+  const level = state.stats?.level || 1
+  const best = state.stats?.best_streak || 0
 
   return (
     <div className="page">
       <div className="card">
         <div className="row-between" style={{ marginBottom: 18 }}>
-          <span className="muted small">Signed in as</span>
+          <span className="muted small">Hi, {state.student.display_name}</span>
           <button className="btn-secondary btn small" onClick={signOut}>Sign out</button>
         </div>
-        <h1>Hi, {student?.display_name}</h1>
-        <p className="sub">Your practice will show up here once your teacher loads the chapter.</p>
-        <div className="alert alert-info">
-          We're still setting up the Chapter 12 questions. Check back soon!
-        </div>
+
+        {!diagDone ? (
+          <>
+            <h1>Let's see where you are.</h1>
+            <p className="sub">Quick 15-question check-in — don't worry about getting every one right. This helps us pick the right practice for you.</p>
+            <button className="btn" style={{ width: '100%' }} onClick={() => setMode('diagnostic')}>
+              Start check-in
+            </button>
+          </>
+        ) : (
+          <>
+            <h1>Ready to practice?</h1>
+            <p className="sub">Keep going — every problem helps.</p>
+            <div className="stats-row">
+              <Stat label="Level" value={level} />
+              <Stat label="XP" value={totalXp} />
+              <Stat label="Best streak" value={best} />
+            </div>
+            <button className="btn" style={{ width: '100%', marginTop: 16 }} onClick={() => setMode('practice')}>
+              Start practice
+            </button>
+          </>
+        )}
       </div>
+    </div>
+  )
+}
+
+function Stat({ label, value }) {
+  return (
+    <div className="stat-cell">
+      <div className="stat-value">{value}</div>
+      <div className="stat-label">{label}</div>
     </div>
   )
 }
