@@ -42,6 +42,7 @@ export default function PracticeFlow({ token, isDiagnostic, student, initialStat
   const [finished, setFinished] = useState(false)
   const [currentLevel, setCurrentLevel] = useState(initialState?.stats?.level || 1)
   const [pendingLevelUp, setPendingLevelUp] = useState(null)
+  const [nextSIThreshold, setNextSIThreshold] = useState(initialState?.stats?.next_space_invader_threshold || 5)
 
   // Seed mastery + history from server state (for practice, not diagnostic)
   useEffect(() => {
@@ -166,6 +167,11 @@ export default function PracticeFlow({ token, isDiagnostic, student, initialStat
       setCurrentLevel(apiRes.stats.level)
     }
 
+    // Track next Space Invaders threshold so we can show "X more to unlock"
+    if (apiRes?.stats?.nextSpaceInvaderThreshold) {
+      setNextSIThreshold(apiRes.stats.nextSpaceInvaderThreshold)
+    }
+
     // Update local state
     setStreak(newStreak)
     setXpGained(xpGained + xpAwarded)
@@ -279,6 +285,11 @@ export default function PracticeFlow({ token, isDiagnostic, student, initialStat
           <>
             <div className="progress-pill">🔥 {streak}</div>
             <div className="progress-pill">+{xpGained} XP</div>
+            {nextSIThreshold <= 25 && nextSIThreshold - streak <= 3 && nextSIThreshold - streak > 0 && (
+              <div className="progress-pill streak-saver">
+                {nextSIThreshold - streak} more to unlock 👾
+              </div>
+            )}
           </>
         )}
         {problem && (

@@ -215,6 +215,37 @@ button {
 .small { font-size: 13px; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 
+.welcome-card {
+  background: linear-gradient(135deg, #f5f7ff 0%, #eef3ff 100%);
+  border-color: #d0daff;
+}
+.welcome-steps {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.welcome-steps li { margin-bottom: 6px; }
+.welcome-steps .mastery-chip { width: 10px; height: 10px; vertical-align: middle; margin: 0 1px; }
+
+.error-details {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-top: 12px;
+}
+.error-details summary { cursor: pointer; color: var(--bad); font-weight: 600; }
+.error-details pre {
+  margin: 8px 0 0;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #7f1d1d;
+}
+
 .stats-row {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -256,6 +287,12 @@ button {
   background: #eff3ff;
   color: var(--accent);
   border-color: #d0daff;
+}
+.progress-pill.streak-saver {
+  background: #fff7e6;
+  color: #b45309;
+  border-color: #fbd38d;
+  animation: mm-pulse 1.6s ease-in-out infinite;
 }
 
 .problem-card .problem-text {

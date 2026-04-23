@@ -111,6 +111,14 @@ export default function TeacherDashboard() {
 
   const studentUrl = `${window.location.origin}/`
   const classSummary = buildClassSummary(roster, statsByStudent, progressByStudent)
+  const showWelcome = typeof window !== 'undefined' && localStorage.getItem('mm-welcome-dismissed') !== '1'
+
+  function dismissWelcome() {
+    localStorage.setItem('mm-welcome-dismissed', '1')
+    // Force re-render
+    setShowAdd((s) => s)
+    setTeacher((t) => ({ ...t }))
+  }
 
   return (
     <div className="page">
@@ -121,6 +129,22 @@ export default function TeacherDashboard() {
           <button className="btn-secondary btn small" onClick={signOut}>Sign out</button>
         </div>
       </div>
+
+      {showWelcome && (
+        <div className="card welcome-card" style={{ maxWidth: 960, marginBottom: 20 }}>
+          <div className="row-between" style={{ marginBottom: 8 }}>
+            <h1 style={{ margin: 0, fontSize: 18 }}>👋 Welcome to your class dashboard</h1>
+            <button className="btn-secondary btn small" onClick={dismissWelcome}>Got it</button>
+          </div>
+          <ol className="welcome-steps">
+            <li><strong>Add your students.</strong> Click "+ Add students" on the roster card and paste your class list, one name per line.</li>
+            <li><strong>Share the link.</strong> Copy the student URL ({studentUrl}) and send it to your class — Google Classroom, email, write on the board. Kids tap their name and pick a 4-digit PIN the first time.</li>
+            <li><strong>Watch progress.</strong> The "Student progress" table shows each kid's level, streak, and a color chip per topic: <span className="mastery-chip" style={{ background: '#15803d' }}></span> mastered, <span className="mastery-chip" style={{ background: '#b45309' }}></span> learning, <span className="mastery-chip" style={{ background: '#b91c1c' }}></span> needs work, <span className="mastery-chip" style={{ background: '#9ca3af' }}></span> hasn't tried yet.</li>
+            <li><strong>Click any student row</strong> to see their mastery in detail and every problem they've answered today (great for parent conferences).</li>
+            <li><strong>If a kid forgets their PIN</strong>, click "Reset PIN" on their row — they'll pick a new one next time they log in.</li>
+          </ol>
+        </div>
+      )}
 
       <div className="dashboard">
         <div className="card">
