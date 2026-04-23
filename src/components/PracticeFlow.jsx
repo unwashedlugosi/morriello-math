@@ -91,6 +91,15 @@ export default function PracticeFlow({ token, isDiagnostic, student, initialStat
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, isDiagnostic])
 
+  // Test hook: when ?test=1 is in the URL, expose the current problem on
+  // window so e2e drivers (Playwright) can pick the correct answer.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!new URLSearchParams(window.location.search).has('test')) return
+    window.__mm_currentProblem = problem
+    window.__mm_currentFeedback = feedback
+  }, [problem, feedback])
+
   function nextPracticeProblem(historyNow, recentNow) {
     const history = historyNow && Object.keys(historyNow).length ? historyNow : topicHistory
     const recent = recentNow || recentTopics

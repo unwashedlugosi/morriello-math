@@ -4,7 +4,16 @@ import { api } from '../lib/api.js'
 import { saveSession, loadSession } from '../lib/session.js'
 import PinPad from '../components/PinPad.jsx'
 
-const CLASS_SLUG = import.meta.env.VITE_CLASS_SLUG || 'morriello-math'
+// Class slug: ?class=<slug> URL override wins so tests / multi-class can
+// load a different roster against the same deploy. Falls back to env.
+function resolveClassSlug() {
+  if (typeof window !== 'undefined') {
+    const fromQuery = new URLSearchParams(window.location.search).get('class')
+    if (fromQuery) return fromQuery
+  }
+  return import.meta.env.VITE_CLASS_SLUG || 'morriello-math'
+}
+const CLASS_SLUG = resolveClassSlug()
 
 export default function StudentEntry() {
   const nav = useNavigate()
