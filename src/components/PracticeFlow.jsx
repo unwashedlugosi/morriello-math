@@ -6,6 +6,7 @@ import {
 } from '../engine.js'
 import { api } from '../lib/api.js'
 import ProblemCard from './ProblemCard.jsx'
+import { launchSpaceInvaders } from '../space-invaders.js'
 
 function formatAnswer(problem, raw) {
   if (!problem) return String(raw ?? '')
@@ -163,24 +164,34 @@ export default function PracticeFlow({ token, isDiagnostic, student, initialStat
   }
 
   async function handleContinue() {
-    setFeedback(null)
+    const triggerSI = !isDiagnostic && feedback?.spaceInvaderUnlock
+    const siStreak = streak
 
-    if (isDiagnostic) {
-      const nextIdx = diagIdx + 1
-      if (nextIdx >= diagProblems.length) {
+    function proceed() {
+      if (isDiagnostic) {
+        const nextIdx = diagIdx + 1
+        if (nextIdx >= diagProblems.length) {
+          return endSession()
+        }
+        setDiagIdx(nextIdx)
+        setProblem(diagProblems[nextIdx])
+        setStarted(Date.now())
+        return
+      }
+      if (results.length >= SESSION_CAP) {
         return endSession()
       }
-      setDiagIdx(nextIdx)
-      setProblem(diagProblems[nextIdx])
-      setStarted(Date.now())
-      return
+      nextPracticeProblem(topicHistory, recentTopics)
     }
 
-    // Regular practice: cap at SESSION_CAP
-    if (results.length >= SESSION_CAP) {
-      return endSession()
+    setFeedback(null)
+
+    if (triggerSI) {
+      const label = `${siStreak}-IN-A-ROW!`
+      launchSpaceInvaders(() => proceed(), label, student?.id)
+      return
     }
-    nextPracticeProblem(topicHistory, recentTopics)
+    proceed()
   }
 
   async function endSession() {
