@@ -189,9 +189,72 @@ const POINT_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'M', 'N'
 
 function gen_plot_points(hard = false) {
   const range = 8
-  const easyVariants = ['name-point', 'plot-point', 'identify-from-options']
-  const hardVariants = ['name-point', 'plot-point', 'plot-from-directions', 'identify-from-options', 'same-line-as', 'real-life-map']
+  const easyVariants = ['name-point', 'plot-point', 'identify-from-options', 'single-coord', 'origin']
+  const hardVariants = ['name-point', 'plot-point', 'plot-from-directions', 'identify-from-options', 'same-line-as', 'real-life-map', 'single-coord', 'on-axis']
   const variant = pick(hard ? hardVariants : easyVariants)
+
+  if (variant === 'origin') {
+    return {
+      id: makeId(), topic: 'plot-points', type: 'computation', difficulty: 1,
+      question: `What ordered pair is the origin of the coordinate plane?`,
+      inputType: 'ordered-pair',
+      grid: { range: 5, points: [{ x: 0, y: 0, label: 'origin' }] },
+      answer: { x: 0, y: 0 },
+      explanation: [
+        `The origin is where the x-axis and y-axis meet.`,
+        `Both coordinates are 0, so the origin is (0, 0).`,
+      ],
+      hint: `It's the corner where both axes start.`,
+    }
+  }
+
+  if (variant === 'single-coord') {
+    const x = randInt(1, range)
+    const y = randInt(1, range)
+    const askingFor = pick(['x', 'y'])
+    const label = pick(POINT_LABELS)
+    return {
+      id: makeId(), topic: 'plot-points', type: 'computation', difficulty: hard ? 2 : 1,
+      question: `What is the ${askingFor}-coordinate of point ${label}?`,
+      inputType: 'number',
+      grid: { range, points: [{ x, y, label }] },
+      answer: askingFor === 'x' ? x : y,
+      explanation: [
+        `Point ${label} is at (${x}, ${y}).`,
+        askingFor === 'x'
+          ? `The x-coordinate is the FIRST number, which tells how far right: ${x}.`
+          : `The y-coordinate is the SECOND number, which tells how far up: ${y}.`,
+      ],
+      hint: askingFor === 'x'
+        ? `Count from the origin to point ${label} along the x-axis (right).`
+        : `Count from the origin to point ${label} along the y-axis (up).`,
+    }
+  }
+
+  if (variant === 'on-axis') {
+    const axis = pick(['x', 'y'])
+    const valid = []
+    for (let i = 0; i <= range; i++) {
+      if (axis === 'x') valid.push({ x: i, y: 0 })
+      else valid.push({ x: 0, y: i })
+    }
+    return {
+      id: makeId(), topic: 'plot-points', type: 'word-problem', difficulty: 2,
+      question: `Tap the grid to plot any point that lies on the ${axis}-axis.`,
+      inputType: 'coordinate',
+      grid: { range, points: [] },
+      answer: valid,
+      explanation: [
+        axis === 'x'
+          ? `Points on the x-axis have y = 0. Their ordered pairs look like (?, 0).`
+          : `Points on the y-axis have x = 0. Their ordered pairs look like (0, ?).`,
+      ],
+      hint: axis === 'x'
+        ? `The x-axis is the horizontal line at the bottom of the grid.`
+        : `The y-axis is the vertical line on the left of the grid.`,
+    }
+  }
+
 
   if (variant === 'identify-from-options') {
     const points = []
@@ -340,9 +403,54 @@ function gen_plot_points(hard = false) {
 
 function gen_point_distance(hard = false) {
   const range = 9
-  const easyVariants = ['direct', 'name-other-point']
-  const hardVariants = ['direct', 'rectangle-perimeter', 'which-is-longer', 'rectangle-area', 'name-other-point']
+  const easyVariants = ['direct', 'name-other-point', 'distance-from-origin']
+  const hardVariants = ['direct', 'rectangle-perimeter', 'which-is-longer', 'rectangle-area', 'name-other-point', 'equidistant']
   const variant = pick(hard ? hardVariants : easyVariants)
+
+  if (variant === 'distance-from-origin') {
+    const onX = Math.random() < 0.5
+    const d = randInt(2, range - 1)
+    const p = onX ? { x: d, y: 0 } : { x: 0, y: d }
+    return {
+      id: makeId(), topic: 'point-distance', type: 'computation', difficulty: 1,
+      question: `How far is point P from the origin?`,
+      inputType: 'number',
+      grid: { range, points: [{ x: 0, y: 0, label: 'O' }, { ...p, label: 'P' }], connect: [['O', 'P']] },
+      answer: d,
+      explanation: [
+        `The origin is at (0, 0). P is at (${p.x}, ${p.y}).`,
+        onX
+          ? `Both have y = 0, so P is on the x-axis. Distance = ${p.x} − 0 = ${d}.`
+          : `Both have x = 0, so P is on the y-axis. Distance = ${p.y} − 0 = ${d}.`,
+      ],
+      hint: `When one point is the origin, the distance is just the non-zero coordinate.`,
+    }
+  }
+
+  if (variant === 'equidistant') {
+    // Plot a point that's exactly d units from the given point on a horizontal line
+    const ax = randInt(2, range - 2)
+    const ay = randInt(2, range - 2)
+    const d = randInt(2, Math.min(ax, range - ax))
+    const valid = [
+      { x: ax - d, y: ay },
+      { x: ax + d, y: ay },
+    ].filter((p) => p.x >= 0 && p.x <= range)
+    return {
+      id: makeId(), topic: 'point-distance', type: 'word-problem', difficulty: 2,
+      question: `Tap the grid to plot a point that is exactly ${d} units from point A on the same horizontal line.`,
+      inputType: 'coordinate',
+      grid: { range, points: [{ x: ax, y: ay, label: 'A' }] },
+      answer: valid,
+      explanation: [
+        `On the same horizontal line means same y-coordinate (${ay}).`,
+        `${d} units away means the x-coordinate differs by ${d}.`,
+        `Either (${ax - d}, ${ay}) or (${ax + d}, ${ay}) works.`,
+      ],
+      hint: `Same y, x changes by ${d}. Could be left OR right of A.`,
+    }
+  }
+
 
   if (variant === 'which-is-longer') {
     // Two labeled segments AB and CD; ask which is longer
@@ -534,9 +642,30 @@ const POLYGON_CHOICES = ['triangle', 'rectangle', 'square', 'trapezoid', 'parall
 
 function gen_identify_polygons(hard = false) {
   const range = 8
-  const easyVariants = ['identify', 'count-vertices-name']
-  const hardVariants = ['identify', 'count-vertices-name', 'complete-rectangle']
+  const easyVariants = ['identify', 'count-vertices-name', 'vertex-count']
+  const hardVariants = ['identify', 'count-vertices-name', 'complete-rectangle', 'vertex-count']
   const variant = pick(hard ? hardVariants : easyVariants)
+
+  if (variant === 'vertex-count') {
+    const map = { triangle: 3, quadrilateral: 4, rectangle: 4, square: 4, pentagon: 5, hexagon: 6 }
+    const shape = pick(Object.keys(map))
+    return {
+      id: makeId(), topic: 'identify-polygons', type: 'computation', difficulty: 1,
+      question: `How many vertices does a ${shape} have?`,
+      inputType: 'number',
+      answer: map[shape],
+      explanation: [
+        `A ${shape} has ${map[shape]} vertex/vertices.`,
+        shape === 'rectangle' || shape === 'square' ? `Rectangles and squares are quadrilaterals — 4 corners.` :
+        shape === 'triangle' ? `"Tri" means 3.` :
+        shape === 'pentagon' ? `"Penta" means 5.` :
+        shape === 'hexagon' ? `"Hexa" means 6.` :
+        `"Quad" means 4.`,
+      ],
+      hint: `A vertex is a corner. Picture the shape and count the corners.`,
+    }
+  }
+
 
   if (variant === 'count-vertices-name') {
     const shapes = [
@@ -701,9 +830,51 @@ function gen_graph_data(hard = false) {
   }
 
   const variants = hard
-    ? ['diff-max-min', 'how-many-above', 'specific-x', 'max-x', 'total-sum', 'ratio-compare']
-    : ['specific-x', 'how-many-above', 'max-x', 'total-sum']
+    ? ['diff-max-min', 'how-many-above', 'specific-x', 'max-x', 'total-sum', 'ratio-compare', 'min-x', 'change-direction']
+    : ['specific-x', 'how-many-above', 'max-x', 'total-sum', 'min-x']
   const variant = pick(variants)
+
+  if (variant === 'min-x') {
+    let minIdx = 0
+    for (let i = 1; i < data.length; i++) if (data[i].y < data[minIdx].y) minIdx = i
+    return {
+      id: makeId(), topic: 'graph-data', type: 'word-problem', difficulty: hard ? 2 : 1,
+      question: `Which ${sc.xLabel.toLowerCase()} had the FEWEST ${sc.yLabel.toLowerCase()}?`,
+      inputType: 'choice',
+      table: { xLabel: sc.xLabel, yLabel: sc.yLabel, rows: data.map((d) => ({ x: d.x, y: d.y })) },
+      choices: data.map((d) => `${sc.xLabel} ${d.x}`),
+      answer: `${sc.xLabel} ${data[minIdx].x}`,
+      explanation: [
+        `Find the smallest value in the table: ${data[minIdx].y}.`,
+        `That's at ${sc.xLabel.toLowerCase()} ${data[minIdx].x}.`,
+      ],
+      hint: `Find the smallest number in the table.`,
+    }
+  }
+
+  if (variant === 'change-direction') {
+    // Pick two consecutive x values
+    const i = randInt(0, data.length - 2)
+    const a = data[i], b = data[i + 1]
+    let answer
+    if (b.y > a.y) answer = 'increased'
+    else if (b.y < a.y) answer = 'decreased'
+    else answer = 'stayed the same'
+    return {
+      id: makeId(), topic: 'graph-data', type: 'word-problem', difficulty: hard ? 2 : 1,
+      question: `From ${sc.xLabel.toLowerCase()} ${a.x} to ${sc.xLabel.toLowerCase()} ${b.x}, did the ${sc.yLabel.toLowerCase()} increase, decrease, or stay the same?`,
+      inputType: 'choice',
+      table: { xLabel: sc.xLabel, yLabel: sc.yLabel, rows: data.map((d) => ({ x: d.x, y: d.y })) },
+      choices: ['increased', 'decreased', 'stayed the same'],
+      answer,
+      explanation: [
+        `${sc.xLabel} ${a.x}: ${a.y}.`,
+        `${sc.xLabel} ${b.x}: ${b.y}.`,
+        `So the value ${answer} (${a.y} → ${b.y}).`,
+      ],
+      hint: `Compare the two y-values. Bigger means it increased.`,
+    }
+  }
 
   if (variant === 'max-x') {
     let maxIdx = 0
@@ -854,9 +1025,45 @@ function gen_line_graphs(hard = false) {
   }
 
   const variants = hard
-    ? ['biggest-jump', 'estimate-between', 'value-at-x', 'range', 'biggest-drop']
-    : ['value-at-x', 'biggest-jump', 'range']
+    ? ['biggest-jump', 'estimate-between', 'value-at-x', 'range', 'biggest-drop', 'change-amount', 'start-value']
+    : ['value-at-x', 'biggest-jump', 'range', 'change-amount', 'start-value']
   const variant = pick(variants)
+
+  if (variant === 'start-value') {
+    return {
+      id: makeId(), topic: 'line-graphs', type: 'word-problem', difficulty: hard ? 2 : 1,
+      question: `What was the ${sc.yLabel.toLowerCase()} on ${sc.xLabel.toLowerCase().split(' ')[0]} ${points[0].x}?`,
+      inputType: 'number',
+      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax },
+      answer: points[0].y,
+      explanation: [
+        `Look at the leftmost point on the graph.`,
+        `It's at (${points[0].x}, ${points[0].y}). The starting value is ${points[0].y}.`,
+      ],
+      hint: `The starting value is the leftmost data point.`,
+    }
+  }
+
+  if (variant === 'change-amount') {
+    // Pick two non-adjacent points; ask for the absolute change
+    const i = randInt(0, points.length - 3)
+    const j = i + 2
+    const a = points[i], b = points[j]
+    const change = Math.abs(b.y - a.y)
+    return {
+      id: makeId(), topic: 'line-graphs', type: 'word-problem', difficulty: hard ? 2 : 1,
+      question: `By how much did the ${sc.yLabel.toLowerCase()} change from ${sc.xLabel.toLowerCase().split(' ')[0]} ${a.x} to ${sc.xLabel.toLowerCase().split(' ')[0]} ${b.x}?`,
+      inputType: 'number',
+      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax },
+      answer: change,
+      explanation: [
+        `${sc.xLabel.split(' ')[0]} ${a.x}: ${a.y}.`,
+        `${sc.xLabel.split(' ')[0]} ${b.x}: ${b.y}.`,
+        `Change: |${b.y} − ${a.y}| = ${change}.`,
+      ],
+      hint: `Subtract the smaller value from the bigger one.`,
+    }
+  }
 
   if (variant === 'range') {
     const yvals = points.map((p) => p.y)
@@ -995,8 +1202,56 @@ function gen_line_graphs(hard = false) {
 
 function gen_number_patterns(hard = false) {
   const variant = hard
-    ? pick(['find-rule', 'extend-related', 'two-patterns', 'fill-missing', 'apply-rule', 'which-rule'])
-    : pick(['extend-single', 'find-rule', 'fill-missing', 'apply-rule'])
+    ? pick(['find-rule', 'extend-related', 'two-patterns', 'fill-missing', 'apply-rule', 'which-rule', 'geometric', 'relate-tables'])
+    : pick(['extend-single', 'find-rule', 'fill-missing', 'apply-rule', 'geometric'])
+
+  if (variant === 'geometric') {
+    // Multiplicative pattern: 2, 6, 18, 54 (×3)
+    const ratio = pick([2, 3, 4])
+    const start = pick([1, 2, 3])
+    const seq = [start, start * ratio, start * ratio * ratio, start * ratio * ratio * ratio]
+    return {
+      id: makeId(), topic: 'number-patterns', type: 'word-problem', difficulty: hard ? 2 : 1,
+      question: `Look at this pattern: ${seq.join(', ')}. What rule describes it?`,
+      inputType: 'choice',
+      choices: shuffle([
+        `Multiply by ${ratio}`,
+        `Add ${ratio}`,
+        `Multiply by ${ratio + 1}`,
+        `Add ${seq[1] - seq[0]}`,
+      ]),
+      answer: `Multiply by ${ratio}`,
+      explanation: [
+        `Look at the ratio between consecutive terms.`,
+        `${seq[1]} ÷ ${seq[0]} = ${ratio}.`,
+        `${seq[2]} ÷ ${seq[1]} = ${ratio}.`,
+        `Each term is ${ratio} times the one before it.`,
+      ],
+      hint: `Try dividing each number by the one before it. If you get the same number every time, it's a multiply rule.`,
+    }
+  }
+
+  if (variant === 'relate-tables') {
+    // Newton X, Descartes Y; find Newton's value when Descartes is given
+    const ratioND = pick([2, 3, 4])
+    const newtonStep = pick([3, 5, 6, 8])
+    const descartesStep = newtonStep * ratioND
+    const askMonth = randInt(2, 7)
+    const newtonAtAsk = newtonStep * askMonth
+    const descartesAtAsk = descartesStep * askMonth
+    return {
+      id: makeId(), topic: 'number-patterns', type: 'word-problem', difficulty: 2,
+      question: `Newton saves $${newtonStep} a week. Descartes saves $${descartesStep} a week. When Descartes has saved $${descartesAtAsk}, how much has Newton saved?`,
+      inputType: 'number',
+      answer: newtonAtAsk,
+      explanation: [
+        `Descartes saves ${ratioND}× as much as Newton each week.`,
+        `So Newton has 1/${ratioND} of Descartes' total: $${descartesAtAsk} ÷ ${ratioND} = $${newtonAtAsk}.`,
+        `(Or: ${descartesAtAsk} ÷ ${descartesStep} = ${askMonth} weeks. ${askMonth} × $${newtonStep} = $${newtonAtAsk}.)`,
+      ],
+      hint: `Newton saves a smaller fraction of Descartes' total. Find the ratio first.`,
+    }
+  }
 
   if (variant === 'fill-missing') {
     const start = randInt(0, 5)
