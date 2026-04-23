@@ -25,9 +25,9 @@ export default async function handler(req, res) {
       .eq('id', studentId)
     if (updErr) throw updErr
 
-    // Ensure stats row exists
+    // Ensure stats row exists (level starts at 1, not 0)
     await db.from('classroom_student_stats').upsert(
-      { student_id: studentId, last_active: new Date().toISOString() },
+      { student_id: studentId, level: 1, last_active: new Date().toISOString() },
       { onConflict: 'student_id' }
     )
 

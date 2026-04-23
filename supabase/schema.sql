@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS classroom_student_stats (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id UUID NOT NULL UNIQUE REFERENCES classroom_students(id) ON DELETE CASCADE,
   total_xp INT NOT NULL DEFAULT 0,
-  level INT NOT NULL DEFAULT 0,
+  level INT NOT NULL DEFAULT 1,
   current_streak INT NOT NULL DEFAULT 0,
   best_streak INT NOT NULL DEFAULT 0,
   space_invader_unlocks INT NOT NULL DEFAULT 0,
