@@ -7,6 +7,8 @@ import {
 import { api } from '../lib/api.js'
 import ProblemCard from './ProblemCard.jsx'
 import { launchSpaceInvaders } from '../space-invaders.js'
+import { sfxCorrect, sfxWrong, sfxLevelUp, sfxStreakMilestone } from '../lib/sounds.js'
+import LevelUpCelebration from './LevelUpCelebration.jsx'
 
 function formatAnswer(problem, raw) {
   if (!problem) return String(raw ?? '')
@@ -34,6 +36,8 @@ export default function PracticeFlow({ token, isDiagnostic, student, initialStat
   const [topicMastery, setTopicMastery] = useState({})
   const [error, setError] = useState(null)
   const [finished, setFinished] = useState(false)
+  const [currentLevel, setCurrentLevel] = useState(initialState?.stats?.level || 1)
+  const [pendingLevelUp, setPendingLevelUp] = useState(null)
 
   // Seed mastery + history from server state (for practice, not diagnostic)
   useEffect(() => {
@@ -131,6 +135,20 @@ export default function PracticeFlow({ token, isDiagnostic, student, initialStat
     } catch (err) {
       setError(err.message)
       return
+    }
+
+    // Sound feedback
+    if (!isDiagnostic) {
+      if (correct) sfxCorrect()
+      else sfxWrong()
+      if (correct && [3, 5, 7, 10].includes(newStreak)) sfxStreakMilestone()
+    }
+
+    // Detect level-up
+    if (!isDiagnostic && apiRes?.stats?.level && apiRes.stats.level > currentLevel) {
+      sfxLevelUp()
+      setPendingLevelUp(apiRes.stats.level)
+      setCurrentLevel(apiRes.stats.level)
     }
 
     // Update local state
@@ -259,6 +277,10 @@ export default function PracticeFlow({ token, isDiagnostic, student, initialStat
         <FeedbackCard feedback={feedback} onContinue={handleContinue} />
       ) : (
         <ProblemCard problem={problem} onSubmit={handleSubmit} locked={false} />
+      )}
+
+      {pendingLevelUp != null && (
+        <LevelUpCelebration newLevel={pendingLevelUp} onDone={() => setPendingLevelUp(null)} />
       )}
     </div>
   )
