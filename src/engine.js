@@ -375,7 +375,9 @@ function buildPolygon(shape, range) {
   }
   if (shape === 'rectangle') {
     const x = randInt(1, range - 5), y = randInt(1, range - 4)
-    const w = randInt(3, 5), h = randInt(2, 3)
+    const w = randInt(3, 5)
+    let h = randInt(2, 4)
+    if (h === w) h = w === 3 ? 2 : 3 // rectangle must have w != h (otherwise it's a square)
     return [{ x, y }, { x: x + w, y }, { x: x + w, y: y + h }, { x, y: y + h }]
   }
   if (shape === 'square') {
