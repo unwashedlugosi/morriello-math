@@ -258,7 +258,10 @@ export default function TeacherDashboard() {
         <AddStudentsDialog
           classId={klass.id}
           accessToken={session.access_token}
-          onDone={async () => { setShowAdd(false); await refreshRoster(klass.slug) }}
+          onDone={async () => {
+            setShowAdd(false)
+            await Promise.all([refreshRoster(klass.slug), refreshProgress(klass.id)])
+          }}
           onCancel={() => setShowAdd(false)}
         />
       )}

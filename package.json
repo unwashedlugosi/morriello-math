@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "node test/engine.test.js",
-    "test:e2e": "node test/e2e.test.js"
+    "test:e2e": "node test/e2e.test.js",
+    "test:teacher": "node test/teacher-flow.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.104.1",
