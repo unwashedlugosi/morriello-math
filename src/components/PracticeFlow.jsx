@@ -1,11 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   TOPICS, TOPIC_LIST,
   generateDiagnostic, generateSessionProblem, selectSessionTopic,
-  checkProblemAnswer, calculateXP, getStreakMessage, formatFracObj,
+  checkProblemAnswer, calculateXP, getStreakMessage,
 } from '../engine.js'
 import { api } from '../lib/api.js'
 import ProblemCard from './ProblemCard.jsx'
+
+function formatAnswer(problem, raw) {
+  if (!problem) return String(raw ?? '')
+  if (problem.inputType === 'ordered-pair' || problem.inputType === 'coordinate') {
+    if (raw && typeof raw === 'object' && raw.x != null) return `(${raw.x}, ${raw.y})`
+    return String(raw)
+  }
+  return String(raw ?? '')
+}
 
 const SESSION_CAP = 15 // regular session length
 
@@ -97,18 +106,8 @@ export default function PracticeFlow({ token, isDiagnostic, student, initialStat
       ? 0
       : calculateXP({ correct, difficulty, firstTry, timeMs, streak: newStreak })
 
-    const displayAnswer =
-      problem.inputType === 'fraction'
-        ? formatFracObj({
-            whole: parseInt(answerRaw.whole) || 0,
-            num: parseInt(answerRaw.num) || 0,
-            den: parseInt(answerRaw.den) || 1,
-          })
-        : String(answerRaw)
-    const displayCorrect =
-      problem.inputType === 'fraction'
-        ? formatFracObj(problem.answer)
-        : String(problem.answer)
+    const displayAnswer = formatAnswer(problem, answerRaw)
+    const displayCorrect = formatAnswer(problem, problem.answer)
 
     // Send to server
     let apiRes = null
@@ -255,15 +254,7 @@ export default function PracticeFlow({ token, isDiagnostic, student, initialStat
 }
 
 function FeedbackCard({ feedback, onContinue }) {
-  const isSimplifyIssue = feedback.checkResult === 'not-simplified'
-  const isMixedIssue = feedback.checkResult === 'not-mixed'
-  const heading = feedback.correct
-    ? (feedback.streakMsg || 'Correct!')
-    : isSimplifyIssue
-    ? 'Almost! Simplify.'
-    : isMixedIssue
-    ? 'Almost! Write as a mixed number.'
-    : 'Not quite.'
+  const heading = feedback.correct ? (feedback.streakMsg || 'Correct!') : 'Not quite.'
   return (
     <div className={`card feedback-card ${feedback.correct ? 'correct' : 'wrong'}`}>
       <h1>{heading}</h1>

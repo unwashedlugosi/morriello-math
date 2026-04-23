@@ -1,14 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
+import CoordinateGrid from './CoordinateGrid.jsx'
+import DataTable from './DataTable.jsx'
+import LineGraph from './LineGraph.jsx'
 
 export default function ProblemCard({ problem, onSubmit, locked }) {
   const [numberValue, setNumberValue] = useState('')
-  const [frac, setFrac] = useState({ whole: '', num: '', den: '' })
+  const [orderedPair, setOrderedPair] = useState({ x: '', y: '' })
+  const [plottedPoint, setPlottedPoint] = useState(null)
   const [choice, setChoice] = useState(null)
   const firstRef = useRef()
 
   useEffect(() => {
     setNumberValue('')
-    setFrac({ whole: '', num: '', den: '' })
+    setOrderedPair({ x: '', y: '' })
+    setPlottedPoint(null)
     setChoice(null)
     setTimeout(() => firstRef.current?.focus?.(), 0)
   }, [problem?.id])
@@ -20,8 +25,14 @@ export default function ProblemCard({ problem, onSubmit, locked }) {
     if (problem.inputType === 'number') {
       if (!numberValue.trim()) return
       onSubmit(numberValue)
-    } else if (problem.inputType === 'fraction') {
-      onSubmit(frac)
+    } else if (problem.inputType === 'ordered-pair') {
+      const x = parseInt(orderedPair.x)
+      const y = parseInt(orderedPair.y)
+      if (isNaN(x) || isNaN(y)) return
+      onSubmit({ x, y })
+    } else if (problem.inputType === 'coordinate') {
+      if (!plottedPoint) return
+      onSubmit(plottedPoint)
     } else if (problem.inputType === 'choice') {
       if (!choice) return
       onSubmit(choice)
@@ -32,6 +43,25 @@ export default function ProblemCard({ problem, onSubmit, locked }) {
     <div className="card problem-card">
       <div className="problem-text">{problem.question}</div>
 
+      {/* Visual aids */}
+      {problem.grid && (
+        <CoordinateGrid
+          range={problem.grid.range}
+          points={problem.grid.points || []}
+          connect={problem.grid.connect || []}
+          interactive={problem.inputType === 'coordinate' && !locked}
+          plottedPoint={plottedPoint}
+          onPlot={setPlottedPoint}
+        />
+      )}
+      {problem.table && (
+        <DataTable xLabel={problem.table.xLabel} yLabel={problem.table.yLabel} rows={problem.table.rows} />
+      )}
+      {problem.lineGraph && (
+        <LineGraph {...problem.lineGraph} />
+      )}
+
+      {/* Inputs */}
       {problem.inputType === 'number' && (
         <input
           ref={firstRef}
@@ -47,36 +77,37 @@ export default function ProblemCard({ problem, onSubmit, locked }) {
         />
       )}
 
-      {problem.inputType === 'fraction' && (
-        <div className="frac-input-group">
+      {problem.inputType === 'ordered-pair' && (
+        <div className="ordered-pair-group">
+          <span className="paren">(</span>
           <input
             ref={firstRef}
-            className="input frac-cell"
+            className="input pair-cell"
             inputMode="numeric"
-            placeholder="whole"
-            value={frac.whole}
-            onChange={(e) => setFrac({ ...frac, whole: e.target.value.replace(/\D/g, '') })}
+            placeholder="x"
+            value={orderedPair.x}
+            onChange={(e) => setOrderedPair({ ...orderedPair, x: e.target.value.replace(/\D/g, '') })}
             disabled={locked}
           />
-          <div className="frac-vertical">
-            <input
-              className="input frac-cell"
-              inputMode="numeric"
-              placeholder="num"
-              value={frac.num}
-              onChange={(e) => setFrac({ ...frac, num: e.target.value.replace(/\D/g, '') })}
-              disabled={locked}
-            />
-            <div className="frac-line" />
-            <input
-              className="input frac-cell"
-              inputMode="numeric"
-              placeholder="den"
-              value={frac.den}
-              onChange={(e) => setFrac({ ...frac, den: e.target.value.replace(/\D/g, '') })}
-              disabled={locked}
-            />
-          </div>
+          <span className="paren">,</span>
+          <input
+            className="input pair-cell"
+            inputMode="numeric"
+            placeholder="y"
+            value={orderedPair.y}
+            onChange={(e) => setOrderedPair({ ...orderedPair, y: e.target.value.replace(/\D/g, '') })}
+            onKeyDown={(e) => e.key === 'Enter' && submit()}
+            disabled={locked}
+          />
+          <span className="paren">)</span>
+        </div>
+      )}
+
+      {problem.inputType === 'coordinate' && (
+        <div className="coord-helper">
+          {plottedPoint
+            ? <span className="muted small">Tap the grid again to move the point.</span>
+            : <span className="muted small">Tap a grid intersection to plot.</span>}
         </div>
       )}
 
