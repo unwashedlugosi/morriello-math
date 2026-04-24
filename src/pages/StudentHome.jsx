@@ -2,7 +2,21 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api.js'
 import { loadSession, clearSession } from '../lib/session.js'
+import { TOPICS, TOPIC_LIST } from '../engine.js'
 import PracticeFlow from '../components/PracticeFlow.jsx'
+
+const MASTERY_COLOR = {
+  mastered: '#15803d',
+  learning: '#b45309',
+  'needs-work': '#b91c1c',
+  untested: '#9ca3af',
+}
+const MASTERY_LABEL = {
+  mastered: 'Got it 💪',
+  learning: 'Getting there',
+  'needs-work': 'Keep practicing',
+  untested: 'Haven\'t tried yet',
+}
 
 export default function StudentHome() {
   const nav = useNavigate()
@@ -93,6 +107,7 @@ export default function StudentHome() {
             <button className="btn big-btn" style={{ width: '100%', marginTop: 16 }} onClick={() => setMode('practice')}>
               Start practice →
             </button>
+            <ProgressSummary topicProgress={state.topicProgress || {}} />
           </>
         )}
 
@@ -100,6 +115,60 @@ export default function StudentHome() {
           I'm done — sign out
         </button>
       </div>
+    </div>
+  )
+}
+
+function ProgressSummary({ topicProgress }) {
+  const rows = TOPIC_LIST.map((t) => {
+    const p = topicProgress[t]
+    return {
+      topic: t,
+      name: TOPICS[t].name,
+      mastery: p?.mastery || 'untested',
+      attempts: p?.attempts || 0,
+      correct: p?.correct_attempts || 0,
+    }
+  })
+
+  const mastered = rows.filter((r) => r.mastery === 'mastered')
+  const needsWork = rows.filter((r) => r.mastery === 'needs-work')
+  const totalProblems = rows.reduce((s, r) => s + r.attempts, 0)
+
+  if (totalProblems === 0) {
+    return null // nothing meaningful to show before they've practiced
+  }
+
+  return (
+    <div className="progress-summary">
+      <h2 className="progress-summary-h">How am I doing?</h2>
+
+      {(mastered.length > 0 || needsWork.length > 0) && (
+        <div className="progress-blurb">
+          {mastered.length > 0 && (
+            <p>
+              <strong>You've got it 💪 :</strong>{' '}
+              {mastered.map((r) => r.name).join(', ')}.
+            </p>
+          )}
+          {needsWork.length > 0 && (
+            <p>
+              <strong>Keep practicing:</strong>{' '}
+              {needsWork.map((r) => r.name).join(', ')}.
+            </p>
+          )}
+        </div>
+      )}
+
+      <ul className="topic-progress-list">
+        {rows.map((r) => (
+          <li key={r.topic}>
+            <span className="mastery-chip" style={{ background: MASTERY_COLOR[r.mastery] }}></span>
+            <span className="topic-name">{r.name}</span>
+            <span className="topic-status muted small">{MASTERY_LABEL[r.mastery]}{r.attempts > 0 ? ` · ${r.correct}/${r.attempts}` : ''}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

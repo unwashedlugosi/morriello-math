@@ -229,6 +229,52 @@ button {
 .small { font-size: 13px; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 
+.progress-summary {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.progress-summary-h {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+.progress-blurb {
+  background: #fafbff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.progress-blurb p { margin: 0 0 4px; }
+.progress-blurb p:last-child { margin-bottom: 0; }
+.topic-progress-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.topic-progress-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  padding: 6px 4px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.topic-progress-list li:last-child { border-bottom: 0; }
+.topic-progress-list .topic-name {
+  flex: 1;
+  color: var(--ink);
+  font-weight: 500;
+}
+.topic-progress-list .mastery-chip { width: 12px; height: 12px; }
+
 .welcome-card {
   background: linear-gradient(135deg, #f5f7ff 0%, #eef3ff 100%);
   border-color: #d0daff;
