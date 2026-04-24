@@ -404,8 +404,49 @@ function gen_plot_points(hard = false) {
 function gen_point_distance(hard = false) {
   const range = 9
   const easyVariants = ['direct', 'name-other-point', 'distance-from-origin']
-  const hardVariants = ['direct', 'rectangle-perimeter', 'which-is-longer', 'rectangle-area', 'name-other-point', 'equidistant']
+  const hardVariants = ['direct', 'rectangle-perimeter', 'which-is-longer', 'rectangle-area', 'name-other-point', 'equidistant', 'laps-perimeter']
   const variant = pick(hard ? hardVariants : easyVariants)
+
+  if (variant === 'laps-perimeter') {
+    // "You run N laps around the rectangular court. How far do you go?"
+    const w = randInt(3, 6)
+    const h = randInt(2, 5)
+    const bx = randInt(0, range - w)
+    const by = randInt(0, range - h)
+    const laps = randInt(2, 5)
+    const unitsPerSquare = pick([1, 2, 5, 10])
+    const unit = unitsPerSquare === 1 ? 'foot' : 'feet'
+    const perimeter = (2 * w + 2 * h) * unitsPerSquare
+    const total = perimeter * laps
+    const scenario = pick([
+      { thing: 'volleyball court', verb: 'run', actor: 'You' },
+      { thing: 'baseball diamond', verb: 'jog', actor: 'You' },
+      { thing: 'pool deck', verb: 'walk', actor: 'You' },
+      { thing: 'garden plot', verb: 'walk around', actor: 'A gardener' },
+    ])
+    return {
+      id: makeId(), topic: 'point-distance', type: 'word-problem', difficulty: 2,
+      question: `${scenario.actor} ${scenario.verb} ${laps} laps around a rectangular ${scenario.thing} with corners at (${bx}, ${by}), (${bx + w}, ${by}), (${bx + w}, ${by + h}), and (${bx}, ${by + h}). Each unit on the grid represents ${unitsPerSquare} ${unit}. How many ${unit} in total?`,
+      inputType: 'number',
+      grid: {
+        range,
+        points: [
+          { x: bx, y: by, label: 'A' }, { x: bx + w, y: by, label: 'B' },
+          { x: bx + w, y: by + h, label: 'C' }, { x: bx, y: by + h, label: 'D' },
+        ],
+        connect: [['A', 'B'], ['B', 'C'], ['C', 'D'], ['D', 'A']],
+      },
+      answer: total,
+      explanation: [
+        `Width on the grid: ${w} units. Height: ${h} units.`,
+        `Perimeter on the grid: 2 × ${w} + 2 × ${h} = ${2 * w + 2 * h} units.`,
+        `Each unit = ${unitsPerSquare} ${unit}, so one lap = ${2 * w + 2 * h} × ${unitsPerSquare} = ${perimeter} ${unit}.`,
+        `${laps} laps = ${perimeter} × ${laps} = ${total} ${unit}.`,
+      ],
+      hint: `Find the perimeter on the grid first, multiply by the unit size, then multiply by the number of laps.`,
+    }
+  }
+
 
   if (variant === 'distance-from-origin') {
     const onX = Math.random() < 0.5
@@ -643,8 +684,58 @@ const POLYGON_CHOICES = ['triangle', 'rectangle', 'square', 'trapezoid', 'parall
 function gen_identify_polygons(hard = false) {
   const range = 8
   const easyVariants = ['identify', 'count-vertices-name', 'vertex-count']
-  const hardVariants = ['identify', 'count-vertices-name', 'complete-rectangle', 'vertex-count']
+  const hardVariants = ['identify', 'count-vertices-name', 'complete-rectangle', 'vertex-count', 'reflect-point']
   const variant = pick(hard ? hardVariants : easyVariants)
+
+  if (variant === 'reflect-point') {
+    // Reflect a point across the y-axis (or vertical line x=N)
+    const horizontal = Math.random() < 0.5 // reflect over horizontal vs vertical line
+    if (horizontal) {
+      // Reflect over horizontal line y=N
+      const lineY = randInt(2, range - 2)
+      let py = randInt(0, range)
+      while (py === lineY) py = randInt(0, range)
+      const px = randInt(0, range)
+      const reflectedY = 2 * lineY - py
+      if (reflectedY < 0 || reflectedY > range) return gen_identify_polygons(hard) // fallback
+      return {
+        id: makeId(), topic: 'identify-polygons', type: 'word-problem', difficulty: 2,
+        question: `Point P is at (${px}, ${py}). Reflect P across the horizontal line y = ${lineY}. Tap the grid to plot the reflected point.`,
+        inputType: 'coordinate',
+        grid: { range, points: [{ x: px, y: py, label: 'P' }] },
+        answer: { x: px, y: reflectedY },
+        explanation: [
+          `Reflecting across a horizontal line keeps the same x-coordinate.`,
+          `P is ${Math.abs(py - lineY)} units away from y = ${lineY} (${py < lineY ? 'below' : 'above'}).`,
+          `The reflection is the same distance on the other side: y = ${reflectedY}.`,
+          `So the reflected point is (${px}, ${reflectedY}).`,
+        ],
+        hint: `Same x. New y is the same distance from the line, but on the other side.`,
+      }
+    } else {
+      const lineX = randInt(2, range - 2)
+      let px = randInt(0, range)
+      while (px === lineX) px = randInt(0, range)
+      const py = randInt(0, range)
+      const reflectedX = 2 * lineX - px
+      if (reflectedX < 0 || reflectedX > range) return gen_identify_polygons(hard)
+      return {
+        id: makeId(), topic: 'identify-polygons', type: 'word-problem', difficulty: 2,
+        question: `Point P is at (${px}, ${py}). Reflect P across the vertical line x = ${lineX}. Tap the grid to plot the reflected point.`,
+        inputType: 'coordinate',
+        grid: { range, points: [{ x: px, y: py, label: 'P' }] },
+        answer: { x: reflectedX, y: py },
+        explanation: [
+          `Reflecting across a vertical line keeps the same y-coordinate.`,
+          `P is ${Math.abs(px - lineX)} units away from x = ${lineX} (${px < lineX ? 'left' : 'right'}).`,
+          `The reflection is the same distance on the other side: x = ${reflectedX}.`,
+          `So the reflected point is (${reflectedX}, ${py}).`,
+        ],
+        hint: `Same y. New x is the same distance from the line, but on the other side.`,
+      }
+    }
+  }
+
 
   if (variant === 'vertex-count') {
     const map = { triangle: 3, quadrilateral: 4, rectangle: 4, square: 4, pentagon: 5, hexagon: 6 }
@@ -830,9 +921,42 @@ function gen_graph_data(hard = false) {
   }
 
   const variants = hard
-    ? ['diff-max-min', 'how-many-above', 'specific-x', 'max-x', 'total-sum', 'ratio-compare', 'min-x', 'change-direction']
+    ? ['diff-max-min', 'how-many-above', 'specific-x', 'max-x', 'total-sum', 'ratio-compare', 'min-x', 'change-direction', 'complement-count']
     : ['specific-x', 'how-many-above', 'max-x', 'total-sum', 'min-x']
   const variant = pick(variants)
+
+  if (variant === 'complement-count') {
+    // "X students take the test. The graph shows how many earn an A. How many do NOT?"
+    const total = randInt(15, 35)
+    // Pick a value in the data, ensure it's < total
+    const valid = data.filter((d) => d.y < total && d.y > 0)
+    if (valid.length === 0) {
+      // fall back to specific-x
+      const q = pick(data)
+      return {
+        id: makeId(), topic: 'graph-data', type: 'word-problem', difficulty: 2,
+        question: `Use the table. How many ${sc.yLabel.toLowerCase()} were there in ${sc.xLabel.toLowerCase()} ${q.x}?`,
+        inputType: 'number',
+        table: { xLabel: sc.xLabel, yLabel: sc.yLabel, rows: data.map((d) => ({ x: d.x, y: d.y })) },
+        answer: q.y,
+        explanation: [`Read the value: ${q.y}.`],
+        hint: `Look it up in the table.`,
+      }
+    }
+    const q = pick(valid)
+    return {
+      id: makeId(), topic: 'graph-data', type: 'word-problem', difficulty: 2,
+      question: `${total} students take part on ${sc.xLabel.toLowerCase()} ${q.x}. The table shows how many ${sc.yLabel.toLowerCase()}. How many did NOT have ${sc.yLabel.toLowerCase().replace(/s$/, '')}?`,
+      inputType: 'number',
+      table: { xLabel: sc.xLabel, yLabel: sc.yLabel, rows: data.map((d) => ({ x: d.x, y: d.y })) },
+      answer: total - q.y,
+      explanation: [
+        `Total: ${total}. Did have: ${q.y}.`,
+        `Did NOT have: ${total} − ${q.y} = ${total - q.y}.`,
+      ],
+      hint: `Total minus the value in the table = the rest.`,
+    }
+  }
 
   if (variant === 'min-x') {
     let minIdx = 0
@@ -1025,9 +1149,34 @@ function gen_line_graphs(hard = false) {
   }
 
   const variants = hard
-    ? ['biggest-jump', 'estimate-between', 'value-at-x', 'range', 'biggest-drop', 'change-amount', 'start-value']
+    ? ['biggest-jump', 'estimate-between', 'value-at-x', 'range', 'biggest-drop', 'change-amount', 'start-value', 'reverse-lookup']
     : ['value-at-x', 'biggest-jump', 'range', 'change-amount', 'start-value']
   const variant = pick(variants)
+
+  if (variant === 'reverse-lookup') {
+    // "When did the value first reach Y?" — pick a y on the line, return the x
+    // Find a target between two known points where we can interpolate cleanly
+    const i = randInt(0, points.length - 2)
+    const a = points[i], b = points[i + 1]
+    if (b.y === a.y) return gen_line_graphs(hard) // flat segment, fallback
+    // Pick an integer y between them
+    const yLow = Math.min(a.y, b.y), yHigh = Math.max(a.y, b.y)
+    if (yHigh - yLow < 2) return gen_line_graphs(hard)
+    // Use exact endpoint to avoid interpolation ambiguity
+    const targetY = b.y
+    return {
+      id: makeId(), topic: 'line-graphs', type: 'word-problem', difficulty: 2,
+      question: `On what ${sc.xLabel.toLowerCase().split(' ')[0]} did the ${sc.yLabel.toLowerCase()} reach ${targetY}?`,
+      inputType: 'number',
+      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax },
+      answer: b.x,
+      explanation: [
+        `Find ${targetY} on the y-axis.`,
+        `Trace right until you hit the line. That's at ${sc.xLabel.toLowerCase().split(' ')[0]} ${b.x}.`,
+      ],
+      hint: `Start at the y-axis (left side). Go right until you touch the line, then look down to the x-axis.`,
+    }
+  }
 
   if (variant === 'start-value') {
     return {
@@ -1202,8 +1351,36 @@ function gen_line_graphs(hard = false) {
 
 function gen_number_patterns(hard = false) {
   const variant = hard
-    ? pick(['find-rule', 'extend-related', 'two-patterns', 'fill-missing', 'apply-rule', 'which-rule', 'geometric', 'relate-tables'])
-    : pick(['extend-single', 'find-rule', 'fill-missing', 'apply-rule', 'geometric'])
+    ? pick(['find-rule', 'extend-related', 'two-patterns', 'fill-missing', 'apply-rule', 'which-rule', 'geometric', 'relate-tables', 'tokens-rate'])
+    : pick(['extend-single', 'find-rule', 'fill-missing', 'apply-rule', 'geometric', 'tokens-rate'])
+
+  if (variant === 'tokens-rate') {
+    // "$1 = 4 tokens = 2 games. You have 60 tokens. How many games can you play?"
+    const tokensPerDollar = pick([3, 4, 5, 6])
+    const gamesPerDollar = pick([1, 2, 3])
+    const tokensPerGame = (tokensPerDollar * 1) / gamesPerDollar
+    if (!Number.isInteger(tokensPerGame)) return gen_number_patterns(hard)
+    const dollarsHeld = randInt(4, 12)
+    const tokensHeld = dollarsHeld * tokensPerDollar
+    const gamesPlayable = tokensHeld / tokensPerGame
+    const scenario = pick([
+      { resource: 'tokens', activity: 'arcade games', verb: 'play' },
+      { resource: 'tickets', activity: 'rides', verb: 'go on' },
+      { resource: 'coins', activity: 'pinball games', verb: 'play' },
+    ])
+    return {
+      id: makeId(), topic: 'number-patterns', type: 'word-problem', difficulty: 2,
+      question: `For each $1 you spend, you get ${tokensPerDollar} ${scenario.resource} and can ${scenario.verb} ${gamesPerDollar} ${scenario.activity}. You have ${tokensHeld} ${scenario.resource}. How many ${scenario.activity} can you ${scenario.verb}?`,
+      inputType: 'number',
+      answer: gamesPlayable,
+      explanation: [
+        `Find the rule between ${scenario.resource} and ${scenario.activity}.`,
+        `${tokensPerDollar} ${scenario.resource} = ${gamesPerDollar} ${scenario.activity}, so each ${scenario.activity.replace(/s$/, '')} costs ${tokensPerGame} ${scenario.resource}.`,
+        `${tokensHeld} ÷ ${tokensPerGame} = ${gamesPlayable} ${scenario.activity}.`,
+      ],
+      hint: `First find how many ${scenario.resource} you need for one ${scenario.activity.replace(/s$/, '')}. Then divide.`,
+    }
+  }
 
   if (variant === 'geometric') {
     // Multiplicative pattern: 2, 6, 18, 54 (×3)
