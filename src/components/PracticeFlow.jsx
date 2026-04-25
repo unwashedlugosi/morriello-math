@@ -81,7 +81,7 @@ export default function PracticeFlow({ token, isDiagnostic, student, initialStat
           setDiagProblems(probs)
           setProblem(probs[0])
         } else {
-          nextPracticeProblem({}, {})
+          nextPracticeProblem({}, [])
         }
         setStarted(Date.now())
       } catch (err) {
