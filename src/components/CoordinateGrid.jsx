@@ -92,19 +92,19 @@ export default function CoordinateGrid({ range = 8, points = [], connect = [], i
         {Array.from({ length: range + 1 }).map((_, i) => (
           <text
             key={`xl${i}`} x={toSvgX(i)} y={toSvgY(0) + 16}
-            textAnchor="middle" fontSize="11" fill="#6b7280"
+            textAnchor="middle" fontSize="14" fill="#6b7280"
           >{i}</text>
         ))}
         {Array.from({ length: range + 1 }).map((_, i) => (
           <text
             key={`yl${i}`} x={toSvgX(0) - 8} y={toSvgY(i) + 4}
-            textAnchor="end" fontSize="11" fill="#6b7280"
+            textAnchor="end" fontSize="14" fill="#6b7280"
           >{i}</text>
         ))}
 
         {/* Axis titles */}
-        <text x={toSvgX(range) + 8} y={toSvgY(0) + 4} fontSize="12" fill="#6b7280" fontStyle="italic">x</text>
-        <text x={toSvgX(0) - 14} y={toSvgY(range) - 4} fontSize="12" fill="#6b7280" fontStyle="italic">y</text>
+        <text x={toSvgX(range) + 8} y={toSvgY(0) + 4} fontSize="14" fill="#6b7280" fontStyle="italic">x</text>
+        <text x={toSvgX(0) - 14} y={toSvgY(range) - 4} fontSize="14" fill="#6b7280" fontStyle="italic">y</text>
 
         {/* Connection line segments */}
         {connect.map(([la, lb], i) => {
@@ -128,7 +128,7 @@ export default function CoordinateGrid({ range = 8, points = [], connect = [], i
             {p.label && (
               <text
                 x={toSvgX(p.x) + 8} y={toSvgY(p.y) - 6}
-                fontSize="13" fontWeight="700" fill="#1a1f36"
+                fontSize="16" fontWeight="700" fill="#1a1f36"
               >{p.label}</text>
             )}
           </g>
@@ -145,7 +145,7 @@ export default function CoordinateGrid({ range = 8, points = [], connect = [], i
             <circle cx={toSvgX(plottedPoint.x)} cy={toSvgY(plottedPoint.y)} r={6} fill="#e11d48" />
             <text
               x={toSvgX(plottedPoint.x) + 9} y={toSvgY(plottedPoint.y) - 7}
-              fontSize="13" fontWeight="700" fill="#9f1239"
+              fontSize="16" fontWeight="700" fill="#9f1239"
             >({plottedPoint.x}, {plottedPoint.y})</text>
           </g>
         )}

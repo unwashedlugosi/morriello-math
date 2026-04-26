@@ -119,11 +119,13 @@ export default async function handler(req, res) {
     const newLevel = computeLevel(newTotalXp)
     const newBest = Math.max(prevStats.best_streak || 0, newStreak)
 
-    // Space Invaders unlock logic
+    // Space Invaders unlock logic — never advance during diagnostic
+    // (UI suppresses SI in diagnostic mode, so advancing the threshold
+    // server-side would skip the kid's first reward.)
     let nextThreshold = prevStats.next_space_invader_threshold || 5
     let unlocks = prevStats.space_invader_unlocks || 0
     let spaceInvaderUnlock = false
-    if (result.correct && newStreak >= nextThreshold && nextThreshold <= 25) {
+    if (!ps.is_diagnostic && result.correct && newStreak >= nextThreshold && nextThreshold <= 25) {
       spaceInvaderUnlock = true
       unlocks += 1
       const idx = SI_THRESHOLDS.indexOf(nextThreshold)
