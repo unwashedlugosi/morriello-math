@@ -1410,22 +1410,28 @@ function gen_number_patterns(hard = false) {
   }
 
   if (variant === 'apply-rule') {
+    // Mirror the textbook's Lesson 12.6 format: labeled table of positions →
+    // values. Kids fill in a missing later position. No ambiguity about
+    // whether "term 1" is the start or the next number.
     const start = randInt(0, 4)
     const step = randInt(2, 12)
-    const term = randInt(4, 8)
-    // Show the first 3 terms so the kid can see the pattern, not just an abstract rule.
-    const shown = [start, start + step, start + step * 2]
+    const askPos = randInt(5, 7)
+    const knownRows = []
+    for (let pos = 1; pos <= 4; pos++) knownRows.push({ x: pos, y: start + step * (pos - 1) })
+    const answer = start + step * (askPos - 1)
     return {
       id: makeId(), topic: 'number-patterns', type: 'computation', difficulty: hard ? 2 : 1,
-      question: `A pattern starts at ${start} and follows the rule "Add ${step}": ${shown.join(', ')}, ... What is the ${term}${ordinal(term)} number in the pattern?`,
+      question: `The table follows the rule "Add ${step}". What is the value at position ${askPos}?`,
+      table: { xLabel: 'Position', yLabel: 'Value', rows: knownRows },
       inputType: 'number',
-      answer: start + step * (term - 1),
+      answer,
       explanation: [
-        `Term 1 is ${start}.`,
-        `Each step adds ${step}, and you take ${term - 1} steps to get to term ${term}.`,
-        `${start} + ${step} × ${term - 1} = ${start + step * (term - 1)}.`,
+        `Position 1 is ${start}. Each step adds ${step}.`,
+        `Position 4 is ${start + step * 3}.`,
+        `Continue the pattern: ${[5,6,7].filter(p => p <= askPos).map(p => `position ${p} = ${start + step * (p-1)}`).join(', ')}.`,
+        `So position ${askPos} = ${answer}.`,
       ],
-      hint: `Term 1 = start. Term n = start + step × (n − 1).`,
+      hint: `Keep adding ${step} from the last value in the table until you reach position ${askPos}.`,
     }
   }
 
