@@ -119,18 +119,20 @@ export default async function handler(req, res) {
     const newLevel = computeLevel(newTotalXp)
     const newBest = Math.max(prevStats.best_streak || 0, newStreak)
 
-    // Space Invaders unlock logic — never advance during diagnostic
-    // (UI suppresses SI in diagnostic mode, so advancing the threshold
-    // server-side would skip the kid's first reward.)
-    let nextThreshold = prevStats.next_space_invader_threshold || 5
+    // Space Invaders unlock logic — milestone-based on the CURRENT streak.
+    // SI fires whenever the current streak crosses 5, 10, 15, 20, or 25.
+    // Reset is automatic: when streak breaks, the next 5-in-a-row earns SI again.
+    // (No persistent "lifetime cap" — the old threshold counter was getting
+    //  pinned at 999 and silently blocking SI forever after a long run.)
     let unlocks = prevStats.space_invader_unlocks || 0
     let spaceInvaderUnlock = false
-    if (!ps.is_diagnostic && result.correct && newStreak >= nextThreshold && nextThreshold <= 25) {
+    if (!ps.is_diagnostic && result.correct && SI_THRESHOLDS.includes(newStreak)) {
       spaceInvaderUnlock = true
       unlocks += 1
-      const idx = SI_THRESHOLDS.indexOf(nextThreshold)
-      nextThreshold = idx >= 0 && idx < SI_THRESHOLDS.length - 1 ? SI_THRESHOLDS[idx + 1] : 999
     }
+    // nextThreshold powers the "X more to unlock 👾" hint on the practice header.
+    let nextThreshold = 999
+    for (const m of SI_THRESHOLDS) { if (m > newStreak) { nextThreshold = m; break } }
 
     await db.from('classroom_student_stats').upsert(
       {
