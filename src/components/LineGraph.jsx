@@ -1,5 +1,6 @@
 // Renders a line graph (x vs y) with connected line segments.
-// Auto-scales based on data range.
+// Gridlines and data points are guaranteed to share intersections — every
+// data point lands exactly on a horizontal gridline (matches textbook style).
 const W = 340
 const H = 240
 const PAD_L = 42
@@ -7,23 +8,37 @@ const PAD_B = 42
 const PAD_T = 28
 const PAD_R = 12
 
+// Pick a gridline step that divides yTop evenly and keeps line count reasonable.
+function pickYStep(yTop) {
+  const candidates = [1, 2, 5, 10, 20, 25, 50, 100]
+  for (const step of candidates) {
+    const lines = yTop / step
+    if (yTop % step === 0 && lines >= 4 && lines <= 12) return step
+  }
+  // fallback: divide into 6 equal parts
+  return Math.max(1, Math.round(yTop / 6))
+}
+
 export default function LineGraph({ title, xLabel, yLabel, points, yMax }) {
   const xs = points.map((p) => p.x)
   const ys = points.map((p) => p.y)
   const xMin = 0
   const xMax = Math.max(...xs) + 1
-  const yTop = yMax || (Math.ceil(Math.max(...ys) / 10) * 10 || 10)
+  const dataMax = Math.max(...ys)
+  // Round yTop UP to a multiple of the chosen step so every data point is on a gridline.
+  let yTop = yMax || Math.max(10, Math.ceil(dataMax / 10) * 10)
+  const yStep = pickYStep(yTop)
+  // Make sure yTop is a multiple of yStep AND ≥ dataMax
+  yTop = Math.max(yTop, Math.ceil(dataMax / yStep) * yStep)
   const chartW = W - PAD_L - PAD_R
   const chartH = H - PAD_T - PAD_B
 
   const sx = (x) => PAD_L + ((x - xMin) / (xMax - xMin)) * chartW
   const sy = (y) => PAD_T + chartH - (y / yTop) * chartH
 
-  // Grid lines (horizontal)
+  // Horizontal gridlines at every yStep — guarantees data points land on intersections.
   const hLines = []
-  const steps = 5
-  for (let i = 0; i <= steps; i++) {
-    const y = (yTop / steps) * i
+  for (let y = 0; y <= yTop; y += yStep) {
     hLines.push({ y, sy: sy(y) })
   }
 

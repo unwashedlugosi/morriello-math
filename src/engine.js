@@ -1132,24 +1132,28 @@ function gen_graph_data(hard = false) {
 // ===== 12.5: LINE GRAPHS =====
 
 function gen_line_graphs(hard = false) {
+  // step = gridline spacing on the y-axis. Data values are constrained to
+  // multiples of `step` so every plotted point lands exactly on a grid
+  // intersection — matches the textbook style.
   const scenarios = [
-    { xLabel: 'Age (months)', yLabel: 'Weight (pounds)', title: "Dog's Weight", yMax: 60 },
-    { xLabel: 'Day', yLabel: 'Height (cm)', title: 'Seedling Height', yMax: 30 },
-    { xLabel: 'Time (hours)', yLabel: 'Temperature (°F)', title: 'Storm Temperature', yMax: 35 },
-    { xLabel: 'Day', yLabel: 'Money raised ($)', title: 'Class Fundraiser', yMax: 120 },
+    { xLabel: 'Age (months)', yLabel: 'Weight (pounds)', title: "Dog's Weight", yMax: 60, step: 5 },
+    { xLabel: 'Day', yLabel: 'Height (cm)', title: 'Seedling Height', yMax: 30, step: 2 },
+    { xLabel: 'Time (hours)', yLabel: 'Temperature (°F)', title: 'Storm Temperature', yMax: 40, step: 5 },
+    { xLabel: 'Day', yLabel: 'Money raised ($)', title: 'Class Fundraiser', yMax: 120, step: 10 },
   ]
   const sc = pick(scenarios)
 
-  // Build an increasing (or bumpy) sequence
+  // Build a bumpy sequence — every y is a multiple of sc.step
   const points = []
-  let y = randInt(5, 20)
+  let y = sc.step * randInt(2, Math.max(3, Math.floor(sc.yMax / sc.step / 4)))
   for (let x = 1; x <= 6; x++) {
     points.push({ x, y })
-    y = Math.min(sc.yMax, Math.max(1, y + randInt(-3, 15)))
+    const deltaSteps = randInt(-1, 3) // change by -1..3 grid units
+    y = Math.min(sc.yMax, Math.max(sc.step, y + deltaSteps * sc.step))
   }
 
   const variants = hard
-    ? ['biggest-jump', 'estimate-between', 'value-at-x', 'range', 'biggest-drop', 'change-amount', 'start-value', 'reverse-lookup']
+    ? ['biggest-jump', 'value-at-x', 'range', 'biggest-drop', 'change-amount', 'start-value', 'reverse-lookup']
     : ['value-at-x', 'biggest-jump', 'range', 'change-amount', 'start-value']
   const variant = pick(variants)
 
@@ -1324,26 +1328,16 @@ function gen_line_graphs(hard = false) {
     }
   }
 
-  // estimate-between (hard)
-  // Pick a whole-number x that's between two data points on a straight-line segment
-  const i = randInt(0, points.length - 2)
-  const p1 = points[i], p2 = points[i + 1]
-  if (p2.x - p1.x !== 1) return gen_line_graphs(hard) // fallback
-  // We'll ask about halfway between: not a nice integer x unless we extrapolate
-  // Instead: ask student to estimate the y at the midpoint
-  const midY = Math.round((p1.y + p2.y) / 2)
+  // Fallback (should never hit — all listed variants have explicit handlers above)
+  const q = pick(points)
   return {
-    id: makeId(), topic: 'line-graphs', type: 'word-problem', difficulty: 2,
-    question: `Using the line graph, estimate the ${sc.yLabel.toLowerCase()} halfway between ${sc.xLabel.split(' ')[0]} ${p1.x} and ${sc.xLabel.split(' ')[0]} ${p2.x}.`,
+    id: makeId(), topic: 'line-graphs', type: 'word-problem', difficulty: hard ? 2 : 1,
+    question: `Read the line graph. What was the ${sc.yLabel.toLowerCase()} at ${sc.xLabel.toLowerCase().split(' ')[0]} ${q.x}?`,
     inputType: 'number',
     lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax },
-    answer: midY,
-    explanation: [
-      `At ${sc.xLabel.split(' ')[0]} ${p1.x}, the value is ${p1.y}.`,
-      `At ${sc.xLabel.split(' ')[0]} ${p2.x}, the value is ${p2.y}.`,
-      `Halfway between them on the line is about (${p1.y} + ${p2.y}) ÷ 2 = ${midY}.`,
-    ],
-    hint: `The line connects the two points. Halfway along that segment is halfway between the y values.`,
+    answer: q.y,
+    explanation: [`Find x = ${q.x} on the horizontal axis.`, `Trace up to the line, then read across to the y-axis: ${q.y}.`],
+    hint: `Go up from x = ${q.x} until you hit the line, then look left to the y-axis.`,
   }
 }
 
