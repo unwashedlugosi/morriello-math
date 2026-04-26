@@ -189,8 +189,10 @@ const POINT_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'M', 'N'
 
 function gen_plot_points(hard = false) {
   const range = 8
+  // Dropped: same-line-as — that's a 12.2 (relate-points) skill, already
+  // covered by point-distance/name-other-point; including it here duplicates.
   const easyVariants = ['name-point', 'plot-point', 'identify-from-options', 'single-coord', 'origin']
-  const hardVariants = ['name-point', 'plot-point', 'plot-from-directions', 'identify-from-options', 'same-line-as', 'real-life-map', 'single-coord', 'on-axis']
+  const hardVariants = ['name-point', 'plot-point', 'plot-from-directions', 'identify-from-options', 'real-life-map', 'single-coord', 'on-axis']
   const variant = pick(hard ? hardVariants : easyVariants)
 
   if (variant === 'origin') {
@@ -284,35 +286,6 @@ function gen_plot_points(hard = false) {
     }
   }
 
-  if (variant === 'same-line-as') {
-    const horizontal = Math.random() < 0.5
-    const ax = randInt(1, range - 1)
-    const ay = randInt(1, range - 1)
-    const valid = []
-    for (let i = 0; i <= range; i++) {
-      if (horizontal && i !== ax) valid.push({ x: i, y: ay })
-      else if (!horizontal && i !== ay) valid.push({ x: ax, y: i })
-    }
-    return {
-      id: makeId(), topic: 'plot-points', type: 'word-problem', difficulty: 2,
-      question: `Point A is at (${ax}, ${ay}). Plot a point B that lies on the same ${horizontal ? 'horizontal' : 'vertical'} line as A.`,
-      inputType: 'coordinate',
-      grid: { range, points: [{ x: ax, y: ay, label: 'A' }] },
-      answer: valid,
-      explanation: [
-        horizontal
-          ? `Points on a horizontal line share the same y-coordinate.`
-          : `Points on a vertical line share the same x-coordinate.`,
-        horizontal
-          ? `B needs y = ${ay}. Any x other than ${ax} works.`
-          : `B needs x = ${ax}. Any y other than ${ay} works.`,
-      ],
-      hint: horizontal
-        ? `Pick any point straight to the left or right of A.`
-        : `Pick any point straight up or down from A.`,
-    }
-  }
-
   if (variant === 'real-life-map') {
     const places = [
       { name: 'school', label: 'School' },
@@ -403,33 +376,15 @@ function gen_plot_points(hard = false) {
 
 function gen_point_distance(hard = false) {
   const range = 9
-  const easyVariants = ['direct', 'name-other-point', 'distance-from-origin']
+  // Dropped: distance-from-origin — chapter 12.2 is about distance between any
+  // two collinear points, never specifically asks "from the origin".
+  const easyVariants = ['direct', 'name-other-point']
   // laps-perimeter (multi-step: perimeter × laps × unit conversion) was dropped —
   // the textbook has it only once and the question text reads identical across
   // scenarios, so kids perceive it as the "same" question repeating.
   const hardVariants = ['direct', 'rectangle-perimeter', 'which-is-longer', 'rectangle-area', 'name-other-point', 'equidistant']
   const variant = pick(hard ? hardVariants : easyVariants)
 
-
-  if (variant === 'distance-from-origin') {
-    const onX = Math.random() < 0.5
-    const d = randInt(2, range - 1)
-    const p = onX ? { x: d, y: 0 } : { x: 0, y: d }
-    return {
-      id: makeId(), topic: 'point-distance', type: 'computation', difficulty: 1,
-      question: `How far is point P from the origin?`,
-      inputType: 'number',
-      grid: { range, points: [{ x: 0, y: 0, label: 'O' }, { ...p, label: 'P' }], connect: [['O', 'P']] },
-      answer: d,
-      explanation: [
-        `The origin is at (0, 0). P is at (${p.x}, ${p.y}).`,
-        onX
-          ? `Both have y = 0, so P is on the x-axis. Distance = ${p.x} − 0 = ${d}.`
-          : `Both have x = 0, so P is on the y-axis. Distance = ${p.y} − 0 = ${d}.`,
-      ],
-      hint: `When one point is the origin, the distance is just the non-zero coordinate.`,
-    }
-  }
 
   if (variant === 'equidistant') {
     // Plot a point that's exactly d units from the given point on a horizontal line
@@ -883,9 +838,11 @@ function gen_graph_data(hard = false) {
     data.push({ x, y: randInt(Math.floor(sc.yMax * 0.2), sc.yMax) })
   }
 
+  // Dropped: change-direction (textbook never asks "did it increase/decrease"),
+  //          total-sum    (textbook never asks "sum of all values").
   const variants = hard
-    ? ['diff-max-min', 'how-many-above', 'specific-x', 'max-x', 'total-sum', 'ratio-compare', 'min-x', 'change-direction', 'complement-count']
-    : ['specific-x', 'how-many-above', 'max-x', 'total-sum', 'min-x']
+    ? ['diff-max-min', 'how-many-above', 'specific-x', 'max-x', 'ratio-compare', 'min-x', 'complement-count']
+    : ['specific-x', 'how-many-above', 'max-x', 'min-x']
   const variant = pick(variants)
 
   if (variant === 'complement-count') {
@@ -922,77 +879,36 @@ function gen_graph_data(hard = false) {
   }
 
   if (variant === 'min-x') {
-    let minIdx = 0
-    for (let i = 1; i < data.length; i++) if (data[i].y < data[minIdx].y) minIdx = i
+    // Match textbook style: ask for the VALUE (least amount), not which x has it.
+    const minVal = Math.min(...data.map((d) => d.y))
     return {
       id: makeId(), topic: 'graph-data', type: 'word-problem', difficulty: hard ? 2 : 1,
-      question: `Which ${sc.xLabel.toLowerCase()} had the FEWEST ${sc.yLabel.toLowerCase()}?`,
-      inputType: 'choice',
+      question: `What is the least number of ${sc.yLabel.toLowerCase()} in the table?`,
+      inputType: 'number',
       table: { xLabel: sc.xLabel, yLabel: sc.yLabel, rows: data.map((d) => ({ x: d.x, y: d.y })) },
-      choices: data.map((d) => `${sc.xLabel} ${d.x}`),
-      answer: `${sc.xLabel} ${data[minIdx].x}`,
+      answer: minVal,
       explanation: [
-        `Find the smallest value in the table: ${data[minIdx].y}.`,
-        `That's at ${sc.xLabel.toLowerCase()} ${data[minIdx].x}.`,
+        `Look at every ${sc.yLabel.toLowerCase()} value in the table.`,
+        `The smallest one is ${minVal}.`,
       ],
       hint: `Find the smallest number in the table.`,
     }
   }
 
-  if (variant === 'change-direction') {
-    // Pick two consecutive x values
-    const i = randInt(0, data.length - 2)
-    const a = data[i], b = data[i + 1]
-    let answer
-    if (b.y > a.y) answer = 'increased'
-    else if (b.y < a.y) answer = 'decreased'
-    else answer = 'stayed the same'
-    return {
-      id: makeId(), topic: 'graph-data', type: 'word-problem', difficulty: hard ? 2 : 1,
-      question: `From ${sc.xLabel.toLowerCase()} ${a.x} to ${sc.xLabel.toLowerCase()} ${b.x}, did the ${sc.yLabel.toLowerCase()} increase, decrease, or stay the same?`,
-      inputType: 'choice',
-      table: { xLabel: sc.xLabel, yLabel: sc.yLabel, rows: data.map((d) => ({ x: d.x, y: d.y })) },
-      choices: ['increased', 'decreased', 'stayed the same'],
-      answer,
-      explanation: [
-        `${sc.xLabel} ${a.x}: ${a.y}.`,
-        `${sc.xLabel} ${b.x}: ${b.y}.`,
-        `So the value ${answer} (${a.y} → ${b.y}).`,
-      ],
-      hint: `Compare the two y-values. Bigger means it increased.`,
-    }
-  }
-
   if (variant === 'max-x') {
-    let maxIdx = 0
-    for (let i = 1; i < data.length; i++) if (data[i].y > data[maxIdx].y) maxIdx = i
+    // Match textbook style: ask for the VALUE (greatest amount), not which x has it.
+    const maxVal = Math.max(...data.map((d) => d.y))
     return {
       id: makeId(), topic: 'graph-data', type: 'word-problem', difficulty: hard ? 2 : 1,
-      question: `Which ${sc.xLabel.toLowerCase()} had the most ${sc.yLabel.toLowerCase()}?`,
-      inputType: 'choice',
-      table: { xLabel: sc.xLabel, yLabel: sc.yLabel, rows: data.map((d) => ({ x: d.x, y: d.y })) },
-      choices: data.map((d) => `${sc.xLabel} ${d.x}`),
-      answer: `${sc.xLabel} ${data[maxIdx].x}`,
-      explanation: [
-        `Find the largest ${sc.yLabel.toLowerCase()} in the table: ${data[maxIdx].y}.`,
-        `That's at ${sc.xLabel.toLowerCase()} ${data[maxIdx].x}.`,
-      ],
-      hint: `Find the biggest number in the table, then look at which ${sc.xLabel.toLowerCase()} it goes with.`,
-    }
-  }
-
-  if (variant === 'total-sum') {
-    const total = data.reduce((s, d) => s + d.y, 0)
-    return {
-      id: makeId(), topic: 'graph-data', type: 'word-problem', difficulty: hard ? 2 : 1,
-      question: `What is the total ${sc.yLabel.toLowerCase()} across all ${sc.xLabel.toLowerCase()}s?`,
+      question: `What is the greatest number of ${sc.yLabel.toLowerCase()} in the table?`,
       inputType: 'number',
       table: { xLabel: sc.xLabel, yLabel: sc.yLabel, rows: data.map((d) => ({ x: d.x, y: d.y })) },
-      answer: total,
+      answer: maxVal,
       explanation: [
-        `Add up all the values: ${data.map((d) => d.y).join(' + ')} = ${total}.`,
+        `Look at every ${sc.yLabel.toLowerCase()} value in the table.`,
+        `The biggest one is ${maxVal}.`,
       ],
-      hint: `Add every number in the bottom row of the table.`,
+      hint: `Find the biggest number in the table.`,
     }
   }
 
@@ -1307,9 +1223,11 @@ function gen_line_graphs(hard = false) {
 // ===== 12.6: NUMERICAL PATTERNS =====
 
 function gen_number_patterns(hard = false) {
+  // Geometric (×3, ×4) patterns are NOT in chapter 12 — chapter is strictly
+  // additive patterns + ratio relationships between two patterns. Removed.
   const variant = hard
-    ? pick(['find-rule', 'extend-related', 'two-patterns', 'fill-missing', 'apply-rule', 'which-rule', 'geometric', 'relate-tables', 'tokens-rate'])
-    : pick(['extend-single', 'find-rule', 'fill-missing', 'apply-rule', 'geometric', 'tokens-rate'])
+    ? pick(['find-rule', 'extend-related', 'two-patterns', 'fill-missing', 'apply-rule', 'which-rule', 'relate-tables', 'tokens-rate'])
+    : pick(['extend-single', 'find-rule', 'fill-missing', 'apply-rule', 'tokens-rate'])
 
   if (variant === 'tokens-rate') {
     // "$1 = 4 tokens = 2 games. You have 60 tokens. How many games can you play?"
@@ -1336,32 +1254,6 @@ function gen_number_patterns(hard = false) {
         `${tokensHeld} ÷ ${tokensPerGame} = ${gamesPlayable} ${scenario.activity}.`,
       ],
       hint: `First find how many ${scenario.resource} you need for one ${scenario.activity.replace(/s$/, '')}. Then divide.`,
-    }
-  }
-
-  if (variant === 'geometric') {
-    // Multiplicative pattern: 2, 6, 18, 54 (×3)
-    const ratio = pick([2, 3, 4])
-    const start = pick([1, 2, 3])
-    const seq = [start, start * ratio, start * ratio * ratio, start * ratio * ratio * ratio]
-    return {
-      id: makeId(), topic: 'number-patterns', type: 'word-problem', difficulty: hard ? 2 : 1,
-      question: `Look at this pattern: ${seq.join(', ')}. What rule describes it?`,
-      inputType: 'choice',
-      choices: shuffle([
-        `Multiply by ${ratio}`,
-        `Add ${ratio}`,
-        `Multiply by ${ratio + 1}`,
-        `Add ${seq[1] - seq[0]}`,
-      ]),
-      answer: `Multiply by ${ratio}`,
-      explanation: [
-        `Look at the ratio between consecutive terms.`,
-        `${seq[1]} ÷ ${seq[0]} = ${ratio}.`,
-        `${seq[2]} ÷ ${seq[1]} = ${ratio}.`,
-        `Each term is ${ratio} times the one before it.`,
-      ],
-      hint: `Try dividing each number by the one before it. If you get the same number every time, it's a multiply rule.`,
     }
   }
 
