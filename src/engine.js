@@ -606,7 +606,7 @@ function gen_point_distance(hard = false) {
       explanation: [
         `Width: distance from (${bx}, ${by}) to (${bx + w}, ${by}) = ${w} units.`,
         `Height: distance from (${bx}, ${by}) to (${bx}, ${by + h}) = ${h} units.`,
-        `Perimeter = 2 × width + 2 × height = 2 × ${w} + 2 × ${h} = ${perimeter}.`,
+        `Perimeter = (2 × width) + (2 × height) = (2 × ${w}) + (2 × ${h}) = ${2*w} + ${2*h} = ${perimeter}.`,
       ],
       hint: `Add up all four sides. Opposite sides of a rectangle are equal.`,
     }
