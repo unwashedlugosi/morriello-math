@@ -1016,7 +1016,7 @@ function gen_line_graphs(hard = false) {
   // intersection — matches the textbook style.
   const scenarios = [
     { xLabel: 'Age (months)', yLabel: 'Weight (pounds)', title: "Dog's Weight", yMax: 60, step: 5 },
-    { xLabel: 'Day', yLabel: 'Height (cm)', title: 'Seedling Height', yMax: 30, step: 2 },
+    { xLabel: 'Day', yLabel: 'Height (cm)', title: 'Seedling Height', yMax: 30, step: 5 },
     { xLabel: 'Time (hours)', yLabel: 'Temperature (°F)', title: 'Storm Temperature', yMax: 40, step: 5 },
     { xLabel: 'Day', yLabel: 'Money raised ($)', title: 'Class Fundraiser', yMax: 120, step: 10 },
   ]
@@ -1051,7 +1051,7 @@ function gen_line_graphs(hard = false) {
       id: makeId(), topic: 'line-graphs', type: 'word-problem', difficulty: 2,
       question: `On what ${sc.xLabel.toLowerCase().split(' ')[0]} did the ${sc.yLabel.toLowerCase()} reach ${targetY}?`,
       inputType: 'number',
-      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax },
+      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax, yStep: sc.step },
       answer: b.x,
       explanation: [
         `Find ${targetY} on the y-axis.`,
@@ -1066,7 +1066,7 @@ function gen_line_graphs(hard = false) {
       id: makeId(), topic: 'line-graphs', type: 'word-problem', difficulty: hard ? 2 : 1,
       question: `What was the ${sc.yLabel.toLowerCase()} on ${sc.xLabel.toLowerCase().split(' ')[0]} ${points[0].x}?`,
       inputType: 'number',
-      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax },
+      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax, yStep: sc.step },
       answer: points[0].y,
       explanation: [
         `Look at the leftmost point on the graph.`,
@@ -1086,7 +1086,7 @@ function gen_line_graphs(hard = false) {
       id: makeId(), topic: 'line-graphs', type: 'word-problem', difficulty: hard ? 2 : 1,
       question: `By how much did the ${sc.yLabel.toLowerCase()} change from ${sc.xLabel.toLowerCase().split(' ')[0]} ${a.x} to ${sc.xLabel.toLowerCase().split(' ')[0]} ${b.x}?`,
       inputType: 'number',
-      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax },
+      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax, yStep: sc.step },
       answer: change,
       explanation: [
         `${sc.xLabel.split(' ')[0]} ${a.x}: ${a.y}.`,
@@ -1105,7 +1105,7 @@ function gen_line_graphs(hard = false) {
       id: makeId(), topic: 'line-graphs', type: 'word-problem', difficulty: hard ? 2 : 1,
       question: `What is the difference between the greatest and least ${sc.yLabel.toLowerCase()} on the graph?`,
       inputType: 'number',
-      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax },
+      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax, yStep: sc.step },
       answer: maxY - minY,
       explanation: [
         `Greatest ${sc.yLabel.toLowerCase()}: ${maxY}.`,
@@ -1136,7 +1136,7 @@ function gen_line_graphs(hard = false) {
         question: `Between which two points does the graph change the most?`,
         inputType: 'choice',
         choices: shuffle([correctAnswer, `${sc.xLabel.split(' ')[0]} 1 and 2`, `${sc.xLabel.split(' ')[0]} 5 and 6`]),
-        lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax },
+        lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax, yStep: sc.step },
         answer: correctAnswer,
         explanation: [`Look for the steepest segment.`],
         hint: `Steepest line = biggest change.`,
@@ -1153,7 +1153,7 @@ function gen_line_graphs(hard = false) {
       question: `Between which two points does the value DECREASE the most?`,
       inputType: 'choice',
       choices,
-      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax },
+      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax, yStep: sc.step },
       answer: correctAnswer,
       explanation: [
         `Look for the segment that goes down the most.`,
@@ -1169,7 +1169,7 @@ function gen_line_graphs(hard = false) {
       id: makeId(), topic: 'line-graphs', type: 'word-problem', difficulty: hard ? 2 : 1,
       question: `Read the line graph. What was the ${sc.yLabel.toLowerCase()} at ${sc.xLabel.toLowerCase().split(' ')[0]} ${q.x}?`,
       inputType: 'number',
-      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax },
+      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax, yStep: sc.step },
       answer: q.y,
       explanation: [
         `Find x = ${q.x} on the horizontal axis.`,
@@ -1197,7 +1197,7 @@ function gen_line_graphs(hard = false) {
       question: `Between which two points does the line graph change the MOST?`,
       inputType: 'choice',
       choices,
-      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax },
+      lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax, yStep: sc.step },
       answer: correctAnswer,
       explanation: [
         `Look at each segment of the line graph.`,
@@ -1213,7 +1213,7 @@ function gen_line_graphs(hard = false) {
     id: makeId(), topic: 'line-graphs', type: 'word-problem', difficulty: hard ? 2 : 1,
     question: `Read the line graph. What was the ${sc.yLabel.toLowerCase()} at ${sc.xLabel.toLowerCase().split(' ')[0]} ${q.x}?`,
     inputType: 'number',
-    lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax },
+    lineGraph: { xLabel: sc.xLabel, yLabel: sc.yLabel, title: sc.title, points, yMax: sc.yMax, yStep: sc.step },
     answer: q.y,
     explanation: [`Find x = ${q.x} on the horizontal axis.`, `Trace up to the line, then read across to the y-axis: ${q.y}.`],
     hint: `Go up from x = ${q.x} until you hit the line, then look left to the y-axis.`,

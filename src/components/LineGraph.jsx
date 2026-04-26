@@ -19,17 +19,18 @@ function pickYStep(yTop) {
   return Math.max(1, Math.round(yTop / 6))
 }
 
-export default function LineGraph({ title, xLabel, yLabel, points, yMax }) {
+export default function LineGraph({ title, xLabel, yLabel, points, yMax, yStep: yStepProp }) {
   const xs = points.map((p) => p.x)
   const ys = points.map((p) => p.y)
   const xMin = 0
   const xMax = Math.max(...xs) + 1
   const dataMax = Math.max(...ys)
-  // Round yTop UP to a multiple of the chosen step so every data point is on a gridline.
-  let yTop = yMax || Math.max(10, Math.ceil(dataMax / 10) * 10)
-  const yStep = pickYStep(yTop)
-  // Make sure yTop is a multiple of yStep AND ≥ dataMax
-  yTop = Math.max(yTop, Math.ceil(dataMax / yStep) * yStep)
+  // The engine knows the gridline step it generated data against (yStepProp).
+  // Use that as the source of truth so every data point lands on a gridline.
+  const yStep = yStepProp || pickYStep(yMax || Math.max(10, Math.ceil(dataMax / 10) * 10))
+  // yTop must be a multiple of yStep AND ≥ dataMax.
+  const baseTop = yMax || dataMax
+  const yTop = Math.max(yStep, Math.ceil(baseTop / yStep) * yStep)
   const chartW = W - PAD_L - PAD_R
   const chartH = H - PAD_T - PAD_B
 
