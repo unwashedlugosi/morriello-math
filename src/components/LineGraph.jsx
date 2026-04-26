@@ -57,14 +57,14 @@ export default function LineGraph({ title, xLabel, yLabel, points, yMax }) {
         {/* Horizontal grid lines + labels */}
         {hLines.map((ln, i) => (
           <g key={`h${i}`}>
-            <line x1={PAD_L} x2={W - PAD_R} y1={ln.sy} y2={ln.sy} stroke="#e5e7eb" strokeWidth={1} />
+            <line x1={PAD_L} x2={W - PAD_R} y1={ln.sy} y2={ln.sy} stroke="#94a3b8" strokeWidth={1} />
             <text x={PAD_L - 6} y={ln.sy + 3} textAnchor="end" fontSize="10" fill="#6b7280">{Math.round(ln.y)}</text>
           </g>
         ))}
         {/* Vertical grid lines + labels */}
         {vLines.map((ln, i) => (
           <g key={`v${i}`}>
-            <line x1={ln.sx} x2={ln.sx} y1={PAD_T} y2={H - PAD_B} stroke="#eef1f6" strokeWidth={1} />
+            <line x1={ln.sx} x2={ln.sx} y1={PAD_T} y2={H - PAD_B} stroke="#94a3b8" strokeWidth={1} />
             <text x={ln.sx} y={H - PAD_B + 14} textAnchor="middle" fontSize="10" fill="#6b7280">{ln.x}</text>
           </g>
         ))}

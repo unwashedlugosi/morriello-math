@@ -75,7 +75,7 @@ export default function CoordinateGrid({ range = 8, points = [], connect = [], i
           <g key={`v${i}`}>
             <line
               x1={toSvgX(i)} y1={toSvgY(0)} x2={toSvgX(i)} y2={toSvgY(range)}
-              stroke="#d8dee9" strokeWidth={i === 0 ? 2 : 1}
+              stroke="#94a3b8" strokeWidth={i === 0 ? 2 : 1}
             />
           </g>
         ))}
@@ -83,7 +83,7 @@ export default function CoordinateGrid({ range = 8, points = [], connect = [], i
           <g key={`h${i}`}>
             <line
               x1={toSvgX(0)} y1={toSvgY(i)} x2={toSvgX(range)} y2={toSvgY(i)}
-              stroke="#d8dee9" strokeWidth={i === 0 ? 2 : 1}
+              stroke="#94a3b8" strokeWidth={i === 0 ? 2 : 1}
             />
           </g>
         ))}
