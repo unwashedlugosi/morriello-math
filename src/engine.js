@@ -404,48 +404,11 @@ function gen_plot_points(hard = false) {
 function gen_point_distance(hard = false) {
   const range = 9
   const easyVariants = ['direct', 'name-other-point', 'distance-from-origin']
-  const hardVariants = ['direct', 'rectangle-perimeter', 'which-is-longer', 'rectangle-area', 'name-other-point', 'equidistant', 'laps-perimeter']
+  // laps-perimeter (multi-step: perimeter × laps × unit conversion) was dropped —
+  // the textbook has it only once and the question text reads identical across
+  // scenarios, so kids perceive it as the "same" question repeating.
+  const hardVariants = ['direct', 'rectangle-perimeter', 'which-is-longer', 'rectangle-area', 'name-other-point', 'equidistant']
   const variant = pick(hard ? hardVariants : easyVariants)
-
-  if (variant === 'laps-perimeter') {
-    // "You run N laps around the rectangular court. How far do you go?"
-    const w = randInt(3, 6)
-    const h = randInt(2, 5)
-    const bx = randInt(0, range - w)
-    const by = randInt(0, range - h)
-    const laps = randInt(2, 5)
-    const unitsPerSquare = pick([1, 2, 5, 10])
-    const unit = unitsPerSquare === 1 ? 'foot' : 'feet'
-    const perimeter = (2 * w + 2 * h) * unitsPerSquare
-    const total = perimeter * laps
-    const scenario = pick([
-      { thing: 'volleyball court', verb: 'run', actor: 'You' },
-      { thing: 'baseball diamond', verb: 'jog', actor: 'You' },
-      { thing: 'pool deck', verb: 'walk', actor: 'You' },
-      { thing: 'garden plot', verb: 'walk around', actor: 'A gardener' },
-    ])
-    return {
-      id: makeId(), topic: 'point-distance', type: 'word-problem', difficulty: 2,
-      question: `${scenario.actor} ${scenario.verb} ${laps} laps around a rectangular ${scenario.thing} with corners at (${bx}, ${by}), (${bx + w}, ${by}), (${bx + w}, ${by + h}), and (${bx}, ${by + h}). Each unit on the grid represents ${unitsPerSquare} ${unit}. How many ${unit} in total?`,
-      inputType: 'number',
-      grid: {
-        range,
-        points: [
-          { x: bx, y: by, label: 'A' }, { x: bx + w, y: by, label: 'B' },
-          { x: bx + w, y: by + h, label: 'C' }, { x: bx, y: by + h, label: 'D' },
-        ],
-        connect: [['A', 'B'], ['B', 'C'], ['C', 'D'], ['D', 'A']],
-      },
-      answer: total,
-      explanation: [
-        `Width on the grid: ${w} units. Height: ${h} units.`,
-        `Perimeter on the grid: 2 × ${w} + 2 × ${h} = ${2 * w + 2 * h} units.`,
-        `Each unit = ${unitsPerSquare} ${unit}, so one lap = ${2 * w + 2 * h} × ${unitsPerSquare} = ${perimeter} ${unit}.`,
-        `${laps} laps = ${perimeter} × ${laps} = ${total} ${unit}.`,
-      ],
-      hint: `Find the perimeter on the grid first, multiply by the unit size, then multiply by the number of laps.`,
-    }
-  }
 
 
   if (variant === 'distance-from-origin') {
